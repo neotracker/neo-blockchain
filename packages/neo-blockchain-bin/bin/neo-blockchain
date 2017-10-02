@@ -1,0 +1,15 @@
+#! /usr/bin/env babel-node
+/* @flow */
+import program from 'commander';
+
+import { setupCLI } from '../src';
+import pkg from '../package.json';
+
+setupCLI();
+
+program.version(pkg.version);
+
+program
+  .command('full-node [command]', 'start a full node and execute a command')
+
+program.parse(process.argv);

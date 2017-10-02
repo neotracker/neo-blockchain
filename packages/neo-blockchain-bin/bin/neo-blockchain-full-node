@@ -1,0 +1,64 @@
+#! /usr/bin/env babel-node
+/* @flow */
+import type { FullNode } from 'neo-blockchain-full-node';
+
+import program from 'commander';
+
+import { createFullNode, logger, resolveHome, setupCLI } from '../src';
+import pkg from '../package.json';
+
+const { shutdownFuncs, shutdown } = setupCLI();
+
+type Options = {|
+  data: string,
+  test: boolean,
+|};
+
+const getOptions = (options: Object): Options => ({
+  data: options.data == null ? '~/data' : options.data,
+  test: options.test == null ? false : !!options.test,
+  chain: options.chain == null ? undefined : {
+    format: 'raw',
+    path: options.chain,
+  },
+});
+
+const createFullNodeFromCLI = async (optionsIn: Object): Promise<FullNode> => {
+  const options = getOptions(optionsIn);
+  const node = await createFullNode({
+    testNet: options.test,
+    dataPath: options.data,
+    chain: options.chain,
+  });
+  shutdownFuncs.push(() => node.stop());
+  return node;
+};
+
+program
+  .version(pkg.version)
+  .option('-d, --data <path>', 'Data directory for the full node. Defaults to ~/data.')
+  .option('-c, --chain <path>', 'Path to chain.acc file.')
+  .option('-t, --test', 'Run full node for TestNet. Default false.');
+
+program
+  .command('dump <outpath>')
+  .description(
+    'Dump a chain.acc file that can be used to quickly reload a node.'
+  )
+  .action(async (outpath, options) => {
+    const node = await createFullNodeFromCLI(options.parent);
+    logger.info('Dumping chain.acc file...');
+    await node.dump(resolveHome(outpath));
+    logger.info('Done.')
+    shutdown({ exitCode: 0 });
+  });
+
+program
+  .command('start')
+  .description('Start the full node')
+  .action(async (options) => {
+    const node = await createFullNodeFromCLI(options.parent);
+    await node.start();
+  })
+
+program.parse(process.argv);

@@ -1,0 +1,18 @@
+{
+  "name": "neo-blockchain-offline",
+  "version": "0.0.29",
+  "keywords": [
+    "neo",
+    "blockchain"
+  ],
+  "description": "Utilities for loading offline blockchain data into a NEO Blockchain.",
+  "repository": "https://github.com/neotracker/neo-blockchain",
+  "bugs": "https://github.com/neotracker/neo-blockchain/issues",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "neo-blockchain-core": "^0.0.29",
+    "neo-blockchain-node-core": "^0.0.29"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "neo-blockchain-core",
+  "version": "0.0.29",
+  "keywords": [
+    "neo",
+    "blockchain"
+  ],
+  "description": "NEO core types (Block, Transaction, etc.) implementation.",
+  "repository": "https://github.com/neotracker/neo-blockchain",
+  "bugs": "https://github.com/neotracker/neo-blockchain/issues",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "async": "^2.5.0",
+    "bignumber.js": "^4.1.0",
+    "bn.js": "^4.11.8",
+    "bs58": "^4.0.1",
+    "crypto-js": "^3.1.9-1",
+    "elliptic": "^6.4.0",
+    "lodash": "^4.17.4",
+    "wif": "^2.0.6"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "neo-blockchain-network",
+  "version": "0.0.29",
+  "keywords": [
+    "neo",
+    "blockchain"
+  ],
+  "description": "A NEO Network implementation.",
+  "repository": "https://github.com/neotracker/neo-blockchain",
+  "bugs": "https://github.com/neotracker/neo-blockchain/issues",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "neo-blockchain-core": "^0.0.29",
+    "neo-blockchain-node-core": "^0.0.29",
+    "through": "^2.3.8"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "neo-blockchain-client",
+  "version": "0.0.29",
+  "keywords": [
+    "neo",
+    "blockchain"
+  ],
+  "description": "NEO Blockchain client.",
+  "repository": "https://github.com/neotracker/neo-blockchain",
+  "bugs": "https://github.com/neotracker/neo-blockchain/issues",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "bignumber.js": "^4.1.0",
+    "bn.js": "^4.11.8",
+    "dataloader": "^1.3.0",
+    "isomorphic-fetch": "^2.2.1",
+    "ix": "^2.1.4",
+    "lodash": "^4.17.4",
+    "neo-blockchain-core": "^0.0.29"
+  }
+}

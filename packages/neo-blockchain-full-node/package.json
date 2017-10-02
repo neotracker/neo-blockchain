@@ -1,0 +1,25 @@
+{
+  "name": "neo-blockchain-full-node",
+  "version": "0.0.29",
+  "keywords": [
+    "neo",
+    "blockchain"
+  ],
+  "description": "A NEO Full Node implementation.",
+  "repository": "https://github.com/neotracker/neo-blockchain",
+  "bugs": "https://github.com/neotracker/neo-blockchain/issues",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "leveldown": "^1.9.0",
+    "levelup": "^2.0.0-rc3",
+    "neo-blockchain-core": "^0.0.29",
+    "neo-blockchain-impl": "^0.0.29",
+    "neo-blockchain-levelup": "^0.0.29",
+    "neo-blockchain-node": "^0.0.29",
+    "neo-blockchain-node-core": "^0.0.29",
+    "neo-blockchain-offline": "^0.0.29",
+    "neo-blockchain-rpc": "^0.0.29",
+    "neo-blockchain-vm": "^0.0.29"
+  }
+}
