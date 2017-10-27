@@ -2,18 +2,9 @@
 export { default as BlockSystemFee } from './BlockSystemFee';
 export { default as TransactionSpentCoins } from './TransactionSpentCoins';
 
-export {
-  createProfile,
-  getErrorEventBlob,
-} from './logger';
-export {
-  createEndpoint,
-  getEndpointConfig,
-} from './Network';
-export {
-  NULL_ACTION,
-  TRIGGER_TYPE,
-} from './vm';
+export { createProfile } from './log';
+export { createEndpoint, getEndpointConfig } from './Network';
+export { NULL_ACTION, TRIGGER_TYPE } from './vm';
 
 export type {
   Blockchain,
@@ -24,33 +15,16 @@ export type {
 } from './Blockchain';
 export type { BlockSystemFeeKey } from './BlockSystemFee';
 export type {
-  LogEvent,
-  LogEventWithoutContext,
+  LogLevel,
+  LogValue,
+  LogData,
   LogMessage,
-  LogMessageWithContext,
-  LogMessageWithoutContext,
-  LogMeta,
-  LogMetaExtra,
-  LogMetaError,
-  LogMetaErrorBlob,
-  LogMetaRequest,
-  LogMetaRequestError,
-  LogMetaUnexpectedRequestError,
-  LogMetaProfile,
-  Logger,
+  Log,
+  Profiler,
   Profile,
-  LoggingContext,
-  RPCLoggingContext,
-  ResponseLog,
-  RequestLog,
-} from './logger';
-export type {
-  Endpoint,
-  EndpointConfig,
-} from './Network';
-export type {
-  Node,
-} from './Node';
+} from './log';
+export type { Endpoint, EndpointConfig } from './Network';
+export type { Node } from './Node';
 export type {
   TransactionSpentCoinsAdd,
   TransactionSpentCoinsKey,

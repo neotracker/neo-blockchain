@@ -39,9 +39,9 @@ export default class JSONRPCClient extends Client {
   getAccount(addressOrScriptHash: Hash160Like): Promise<Account> {
     return this._provider.request({
       method: 'getaccountstate',
-      params: [this._scriptHashToAddress(
-        converters.hash160(this, addressOrScriptHash),
-      )],
+      params: [
+        this.scriptHashToAddress(converters.hash160(this, addressOrScriptHash)),
+      ],
     });
   }
 
@@ -68,14 +68,17 @@ export default class JSONRPCClient extends Client {
   getActions(filter: GetActionsFilter): Promise<Array<Action>> {
     return this._provider.request({
       method: 'getactions',
-      params: [{
-        ...filter,
-        scriptHash: filter.scriptHash == null
-          ? undefined
-          : JSONHelper.writeUInt160(
-            converters.hash160(this, filter.scriptHash),
-          ),
-      }],
+      params: [
+        {
+          ...filter,
+          scriptHash:
+            filter.scriptHash == null
+              ? undefined
+              : JSONHelper.writeUInt160(
+                  converters.hash160(this, filter.scriptHash),
+                ),
+        },
+      ],
     });
   }
 
@@ -88,14 +91,16 @@ export default class JSONRPCClient extends Client {
   }
 
   sendRawTransaction(value: Buffer): Promise<void> {
-    return this._provider.request({
-      method: 'sendrawtransaction',
-      params: [JSONHelper.writeBuffer(value)],
-    }).then(result => {
-      if (!result) {
-        throw new SendTransactionError();
-      }
-    });
+    return this._provider
+      .request({
+        method: 'sendrawtransaction',
+        params: [JSONHelper.writeBuffer(value)],
+      })
+      .then(result => {
+        if (!result) {
+          throw new SendTransactionError();
+        }
+      });
   }
 
   invokeScript(script: Buffer): Promise<InvocationResult> {

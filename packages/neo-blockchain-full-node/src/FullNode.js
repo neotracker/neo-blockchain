@@ -3,12 +3,10 @@ import Blockchain from 'neo-blockchain-impl';
 import {
   type Blockchain as BlockchainType,
   type Endpoint,
-  type Logger,
+  type Log,
   type Storage,
 } from 'neo-blockchain-node-core';
-import {
-  type Settings,
-} from 'neo-blockchain-core';
+import { type Settings } from 'neo-blockchain-core';
 import Node from 'neo-blockchain-node';
 import { RPCServer, type RPCSettings } from 'neo-blockchain-rpc';
 
@@ -24,7 +22,7 @@ export type FullNodeCreateOptions = {|
   seeds: Array<Endpoint>,
   settings: Settings,
   dataPath: string,
-  logger: Logger,
+  log: Log,
   identifier: string,
   rpcEndpoints: Array<string>,
   rpcSettings?: RPCSettings,
@@ -64,25 +62,23 @@ export default class FullNode {
     settings,
     seeds,
     dataPath,
-    logger,
-    identifier,
+    log,
     rpcEndpoints,
     rpcSettings,
     chain,
   }: FullNodeCreateOptions): Promise<FullNode> {
     const context = {
       messageMagic: settings.messageMagic,
-    }
+    };
     const storage = levelUpStorage({
       db: levelup(leveldown(dataPath)),
       context,
-    })
+    });
     const blockchain = await Blockchain.create({
       settings,
       storage,
       vm,
-      logger,
-      identifier,
+      log,
     });
     const node = new Node({ blockchain, seeds });
     const rpcServer = new RPCServer({

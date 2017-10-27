@@ -10,9 +10,20 @@
     "packages/*"
   ],
   "engines": {
-    "node": "^8.7.0"
+    "node": "^8.8.1"
+  },
+  "lint-staged": {
+    "packages/*/src/**/*.js": [
+      "prettier --write --single-quote --trailing-comma all",
+      "git add"
+    ]
   },
   "scripts": {
+    "lint": "eslint packages/*/src/**",
+    "flow": "flow",
+    "lint-staged": "lint-staged",
+    "flow:coverage": "flow-coverage-report -i 'packages/*/src/**/*.js' -t html",
+    "precommit": "lint-staged && flow && eslint packages/*/src/**",
     "bootstrap": "yarn run build && lerna bootstrap",
     "build": "rm -rf ./packages/*/lib && ./node_modules/.bin/gulp build",
     "publish": "yarn run build && lerna publish",
@@ -39,15 +50,18 @@
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-jsx-a11y": "^6.0.2",
     "eslint-plugin-react": "^7.3.0",
-    "flow-bin": "^0.56.0",
+    "flow-bin": "^0.57.3",
     "gulp": "^3.9.1",
     "gulp-babel": "^7.0.0",
     "gulp-newer": "^1.3.0",
     "gulp-plumber": "^1.1.0",
     "gulp-util": "^3.0.8",
     "gulp-watch": "^4.3.11",
+    "husky": "^0.14.3",
     "lerna": "^2.2.0",
+    "lint-staged": "^4.3.0",
     "merge-stream": "^1.0.1",
+    "prettier": "^1.7.4",
     "through2": "^2.0.3"
   }
 }

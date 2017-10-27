@@ -1,6 +1,4 @@
 /* @flow */
-import type { ContractParameterJSON } from './ContractParameter';
-
 export const CONTRACT_PARAMETER_TYPE = {
   SIGNATURE: 0x00,
   BOOLEAN: 0x01,
@@ -16,17 +14,17 @@ export const CONTRACT_PARAMETER_TYPE = {
 };
 
 export type ContractParameterType =
-  0x00 |
-  0x01 |
-  0x02 |
-  0x03 |
-  0x04 |
-  0x05 |
-  0x06 |
-  0x07 |
-  0x10 |
-  0xf0 |
-  0xff;
+  | 0x00
+  | 0x01
+  | 0x02
+  | 0x03
+  | 0x04
+  | 0x05
+  | 0x06
+  | 0x07
+  | 0x10
+  | 0xf0
+  | 0xff;
 
 export class InvalidContractParameterTypeError extends Error {
   contractParameterType: number;
@@ -34,7 +32,7 @@ export class InvalidContractParameterTypeError extends Error {
   constructor(contractParameterType: number) {
     super(
       `Expected contract parameter type, ` +
-      `found: ${contractParameterType.toString(16)}`
+        `found: ${contractParameterType.toString(16)}`,
     );
     this.contractParameterType = contractParameterType;
   }
@@ -72,20 +70,20 @@ export const assertContractParameterType = (
     default:
       throw new InvalidContractParameterTypeError(value);
   }
-}
+};
 
 export type ContractParameterTypeJSON =
-  'Signature' |
-  'Boolean' |
-  'Integer' |
-  'Hash160' |
-  'Hash256' |
-  'ByteArray' |
-  'PublicKey' |
-  'String' |
-  'Array' |
-  'InteropInterface' |
-  'Void';
+  | 'Signature'
+  | 'Boolean'
+  | 'Integer'
+  | 'Hash160'
+  | 'Hash256'
+  | 'ByteArray'
+  | 'PublicKey'
+  | 'String'
+  | 'Array'
+  | 'InteropInterface'
+  | 'Void';
 
 export const toJSONContractParameterType = (
   type: ContractParameterType,
@@ -118,4 +116,4 @@ export const toJSONContractParameterType = (
       (type: empty);
       throw new InvalidContractParameterTypeError(type);
   }
-}
+};

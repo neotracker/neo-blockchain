@@ -1,6 +1,5 @@
 /* @flow */
 import ArrayStackItem from './ArrayStackItem';
-import type ArrayLikeStackItem from './ArrayLikeStackItem';
 import BooleanStackItem from './BooleanStackItem';
 import BufferStackItem from './BufferStackItem';
 import UInt160StackItem from './UInt160StackItem';
@@ -21,22 +20,22 @@ import ECPointStackItem from './ECPointStackItem';
 import StructStackItem from './StructStackItem';
 
 export type StackItem =
-  ArrayStackItem |
-  BooleanStackItem |
-  BufferStackItem |
-  UInt160StackItem |
-  UInt256StackItem |
-  IntegerStackItem |
-  HeaderStackItem |
-  BlockStackItem |
-  ContractStackItem |
-  TransactionStackItem |
-  AccountStackItem |
-  AssetStackItem |
-  AttributeStackItem |
-  InputStackItem |
-  OutputStackItem |
-  ValidatorStackItem |
-  StorageContextStackItem |
-  ECPointStackItem |
-  StructStackItem;
+  | ArrayStackItem
+  | BooleanStackItem
+  | BufferStackItem
+  | UInt160StackItem
+  | UInt256StackItem
+  | IntegerStackItem
+  | HeaderStackItem
+  | BlockStackItem
+  | ContractStackItem
+  | TransactionStackItem
+  | AccountStackItem
+  | AssetStackItem
+  | AttributeStackItem
+  | InputStackItem
+  | OutputStackItem
+  | ValidatorStackItem
+  | StorageContextStackItem
+  | ECPointStackItem
+  | StructStackItem;

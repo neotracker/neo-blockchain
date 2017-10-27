@@ -29,10 +29,7 @@ import {
 } from './types';
 import AsyncBlockIterator from './AsyncBlockIterator';
 import { type BlockFilter, type GetActionsFilter } from './filter';
-import {
-  type SmartContractABI,
-  SmartContract,
-} from './sc';
+import { type SmartContractABI, SmartContract } from './sc';
 
 import abi from './abi';
 import converters from './converters';
@@ -49,12 +46,14 @@ export default class Client {
 
   constructor(optionsIn?: ClientOptions) {
     const options = optionsIn || {};
-    this._addressVersion = options.addressVersion == null
-      ? common.NEO_ADDRESS_VERSION
-      : options.addressVersion;
-    this._privateKeyVersion = options.privateKeyVersion == null
-      ? common.NEO_PRIVATE_KEY_VERSION
-      : options.privateKeyVersion;
+    this._addressVersion =
+      options.addressVersion == null
+        ? common.NEO_ADDRESS_VERSION
+        : options.addressVersion;
+    this._privateKeyVersion =
+      options.privateKeyVersion == null
+        ? common.NEO_PRIVATE_KEY_VERSION
+        : options.privateKeyVersion;
   }
 
   parameters = parameters;
@@ -108,10 +107,12 @@ export default class Client {
   ): Promise<string> {
     return this._sendTransaction(
       // TODO: Not covered by Flow...
-      new ContractTransaction(({
-        inputs: this._convertInputs(inputs),
-        outputs: this._convertOutputs(outputs),
-      }: $FlowFixMe)),
+      new ContractTransaction(
+        ({
+          inputs: this._convertInputs(inputs),
+          outputs: this._convertOutputs(outputs),
+        }: $FlowFixMe),
+      ),
       privateKey,
     );
   }
@@ -141,41 +142,45 @@ export default class Client {
     throw new Error('Not Implemented');
   }
 
-  _scriptHashToAddress(
-    scriptHash: Hash160Like,
-  ): string {
+  scriptHashToAddress(scriptHash: Hash160Like): string {
     return crypto.scriptHashToAddress({
       addressVersion: this._addressVersion,
       scriptHash: converters.hash160(this, scriptHash),
     });
   }
 
-  _addressToScriptHash(address: string): UInt160 {
+  addressToScriptHash(address: string): UInt160 {
     return crypto.addressToScriptHash({
       addressVersion: this._addressVersion,
       address,
     });
   }
 
-  _wifToPrivateKey(wif: string): PrivateKey {
+  wifToPrivateKey(wif: string): PrivateKey {
     return crypto.wifToPrivateKey(wif, this._privateKeyVersion);
   }
 
   _convertInputs(inputs: Array<InputArg>): Array<Input> {
     // TODO: Not covered by Flow...
-    return inputs.map(input => new Input({
-      hash: converters.hash256(this, input.txid),
-      index: input.index,
-    }));
+    return inputs.map(
+      input =>
+        new Input({
+          hash: converters.hash256(this, input.txid),
+          index: input.index,
+        }),
+    );
   }
 
   _convertOutputs(outputs: Array<OutputArg>): Array<Output> {
     // TODO: Not covered by Flow...
-    return outputs.map(output => new Output({
-      address: converters.hash160(this, output.address),
-      asset: converters.hash256(this, output.asset),
-      value: common.fixed8FromDecimal(output.value),
-    }));
+    return outputs.map(
+      output =>
+        new Output({
+          address: converters.hash160(this, output.address),
+          asset: converters.hash256(this, output.asset),
+          value: common.fixed8FromDecimal(output.value),
+        }),
+    );
   }
 
   async _sendTransaction(

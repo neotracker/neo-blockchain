@@ -1,10 +1,6 @@
 /* @flow */
 import { Observable } from 'rxjs';
-import {
-  type Block,
-  common,
-  utils,
-} from 'neo-blockchain-core';
+import { type Block, common, utils } from 'neo-blockchain-core';
 import {
   type ChangeSet,
   type AddChange,
@@ -15,8 +11,8 @@ import {
 } from 'neo-blockchain-node-core';
 
 type TrackedChange<Key, Value> =
-  {| type: 'add', value: Value |} |
-  {| type: 'delete', key: Key |};
+  | {| type: 'add', value: Value |}
+  | {| type: 'delete', key: Key |};
 
 type GetFunc<Key, Value> = (key: Key) => Promise<Value>;
 type TryGetFunc<Key, Value> = (key: Key) => Promise<?Value>;
@@ -78,7 +74,7 @@ class BaseReadStorageCache<Key, Value> {
   _name: string;
   +_tryGetTracked: (key: Key) => ?TrackedChange<Key, Value>;
   _createAddChange: (value: Value) => AddChange;
-  _createDeleteChange: ?((key: Key) => DeleteChange);
+  _createDeleteChange: ?(key: Key) => DeleteChange;
   _values: { [key: string]: TrackedChange<Key, Value> };
 
   get: GetFunc<Key, Value>;
@@ -123,8 +119,7 @@ type ReadStorageCacheOptions<Key, Value> = {|
   getKeyString: (key: Key) => string,
 |};
 
-class ReadStorageCache<Key, Value>
-  extends BaseReadStorageCache<Key, Value> {
+class ReadStorageCache<Key, Value> extends BaseReadStorageCache<Key, Value> {
   _getKeyString: (key: Key) => string;
 
   constructor(options: ReadStorageCacheOptions<Key, Value>) {
@@ -133,7 +128,7 @@ class ReadStorageCache<Key, Value>
       name: options.name,
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
-    })
+    });
     this._getKeyString = options.getKeyString;
   }
 
@@ -172,24 +167,22 @@ class ReadAllStorageCache<Key, Value> extends ReadStorageCache<Key, Value> {
 
     this.all = Observable.concat(
       Observable.defer(() =>
-        Observable.of(...utils.values(this._values)
-          .map(value => value.type === 'add' ? value.value : null)
-          .filter(Boolean)
-        )
+        Observable.of(
+          ...utils
+            .values(this._values)
+            .map(value => (value.type === 'add' ? value.value : null))
+            .filter(Boolean),
+        ),
       ),
-      this._readAllStorage.all.concatMap(
-        value => {
-          const trackedChange = this._tryGetTracked(
-            this._getKeyFromValue(value),
-          );
+      this._readAllStorage.all.concatMap(value => {
+        const trackedChange = this._tryGetTracked(this._getKeyFromValue(value));
 
-          if (trackedChange != null && trackedChange.type === 'delete') {
-            return Observable.of();
-          }
-
-          return Observable.of(value);
+        if (trackedChange != null && trackedChange.type === 'delete') {
+          return Observable.of();
         }
-      ),
+
+        return Observable.of(value);
+      }),
     );
   }
 }
@@ -204,8 +197,10 @@ type ReadGetAllStorageCacheOptions<Key, PartialKey, Value> = {|
   matchesPartialKey: (value: Value, key: PartialKey) => boolean,
 |};
 
-class ReadGetAllStorageCache<Key, PartialKey, Value>
-  extends ReadStorageCache<Key, Value> {
+class ReadGetAllStorageCache<Key, PartialKey, Value> extends ReadStorageCache<
+  Key,
+  Value,
+> {
   _readGetAllStorage: ReadGetAllStorage<Key, PartialKey, Value>;
   _getKeyFromValue: (value: Value) => Key;
   _matchesPartialKey: (value: Value, key: PartialKey) => boolean;
@@ -228,34 +223,34 @@ class ReadGetAllStorageCache<Key, PartialKey, Value>
     this._matchesPartialKey = options.matchesPartialKey;
 
     this.getAll = (key: PartialKey): Observable<Value> => {
-      const createdValues = utils.values(this._values)
-        .map(value =>
-          value.type === 'add' &&
-          this._matchesPartialKey(value.value, key)
-            ? value.value
-            : null
-        ).filter(Boolean);
+      const createdValues = utils
+        .values(this._values)
+        .map(
+          value =>
+            value.type === 'add' && this._matchesPartialKey(value.value, key)
+              ? value.value
+              : null,
+        )
+        .filter(Boolean);
       return Observable.concat(
         Observable.of(...createdValues),
-        this._readGetAllStorage.getAll(key).concatMap(
-          value => {
-            const trackedChange = this._tryGetTracked(
-              this._getKeyFromValue(value),
-            );
+        this._readGetAllStorage.getAll(key).concatMap(value => {
+          const trackedChange = this._tryGetTracked(
+            this._getKeyFromValue(value),
+          );
 
-            if (trackedChange != null && trackedChange.type === 'delete') {
-              return Observable.of();
-            }
-
-            return Observable.of(value);
+          if (trackedChange != null && trackedChange.type === 'delete') {
+            return Observable.of();
           }
-        ),
+
+          return Observable.of(value);
+        }),
       );
-    }
+    };
   }
 }
 
-type AddFunc<Value> = (value: Value) => Promise<void>;
+type AddFunc<Value> = (value: Value, force?: boolean) => Promise<void>;
 
 function createAdd<Key, Value>({
   cache,
@@ -275,7 +270,7 @@ function createAdd<Key, Value>({
         // TODO: Better error
         throw new Error(
           `Attempted to add an already existing object for key ` +
-          `${cache._name}:${getKeyString(key)}.`
+            `${cache._name}:${getKeyString(key)}.`,
         );
       }
     }
@@ -285,8 +280,10 @@ function createAdd<Key, Value>({
   };
 }
 
-type UpdateFunc<Value, Update> =
-  (value: Value, update: Update) => Promise<Value>;
+type UpdateFunc<Value, Update> = (
+  value: Value,
+  update: Update,
+) => Promise<Value>;
 
 function createUpdate<Key, Value, Update>({
   cache,
@@ -302,14 +299,16 @@ function createUpdate<Key, Value, Update>({
 
     const updatedValue = updateFunc(value, update);
     // eslint-disable-next-line
-    cache._values[cache._getKeyString(key)] =
-      { type: 'add', value: updatedValue };
+    cache._values[cache._getKeyString(key)] = {
+      type: 'add',
+      value: updatedValue,
+    };
 
     return updatedValue;
   };
 }
 
-type DeleteFunc<Key> = (key: Key) => Promise<void>
+type DeleteFunc<Key> = (key: Key) => Promise<void>;
 
 function createDelete<Key>({
   cache,
@@ -328,8 +327,11 @@ type ReadAddUpdateDeleteStorageCacheOptions<Key, Value, Update> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadAddUpdateDeleteStorageCache<Key, Value, Update>
-  extends ReadStorageCache<Key, Value> {
+export class ReadAddUpdateDeleteStorageCache<
+  Key,
+  Value,
+  Update,
+> extends ReadStorageCache<Key, Value> {
   add: AddFunc<Value>;
   update: UpdateFunc<Value, Update>;
   delete: DeleteFunc<Key>;
@@ -343,7 +345,7 @@ export class ReadAddUpdateDeleteStorageCache<Key, Value, Update>
       getKeyString: options.getKeyString,
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -364,21 +366,22 @@ type ReadAddUpdateStorageCacheOptions<Key, Value, Update> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadAddUpdateStorageCache<Key, Value, Update>
-  extends ReadStorageCache<Key, Value> {
+export class ReadAddUpdateStorageCache<
+  Key,
+  Value,
+  Update,
+> extends ReadStorageCache<Key, Value> {
   add: AddFunc<Value>;
   update: UpdateFunc<Value, Update>;
 
-  constructor(
-    options: ReadAddUpdateStorageCacheOptions<Key, Value, Update>,
-  ) {
+  constructor(options: ReadAddUpdateStorageCacheOptions<Key, Value, Update>) {
     super({
       readStorage: options.readStorage,
       name: options.name,
       getKeyString: options.getKeyString,
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -397,21 +400,21 @@ type ReadAddDeleteStorageCacheOptions<Key, Value> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadAddDeleteStorageCache<Key, Value>
-  extends ReadStorageCache<Key, Value> {
+export class ReadAddDeleteStorageCache<Key, Value> extends ReadStorageCache<
+  Key,
+  Value,
+> {
   add: AddFunc<Value>;
   delete: DeleteFunc<Key>;
 
-  constructor(
-    options: ReadAddDeleteStorageCacheOptions<Key, Value>,
-  ) {
+  constructor(options: ReadAddDeleteStorageCacheOptions<Key, Value>) {
     super({
       readStorage: options.readStorage,
       name: options.name,
       getKeyString: options.getKeyString,
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -426,8 +429,10 @@ type ReadAddStorageCacheOptions<Key, Value> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadAddStorageCache<Key, Value>
-  extends ReadStorageCache<Key, Value> {
+export class ReadAddStorageCache<Key, Value> extends ReadStorageCache<
+  Key,
+  Value,
+> {
   add: AddFunc<Value>;
 
   constructor(options: ReadAddStorageCacheOptions<Key, Value>) {
@@ -437,7 +442,7 @@ export class ReadAddStorageCache<Key, Value>
       getKeyString: options.getKeyString,
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -446,20 +451,34 @@ export class ReadAddStorageCache<Key, Value>
   }
 }
 
-type ReadGetAllAddUpdateDeleteStorageCacheOptions<Key, PartialKey, Value, Update> = {|
+type ReadGetAllAddUpdateDeleteStorageCacheOptions<
+  Key,
+  PartialKey,
+  Value,
+  Update,
+> = {|
   ...ReadGetAllStorageCacheOptions<Key, PartialKey, Value>,
   update: (value: Value, update: Update) => Value,
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadGetAllAddUpdateDeleteStorageCache<Key, PartialKey, Value, Update>
-  extends ReadGetAllStorageCache<Key, PartialKey, Value> {
+export class ReadGetAllAddUpdateDeleteStorageCache<
+  Key,
+  PartialKey,
+  Value,
+  Update,
+> extends ReadGetAllStorageCache<Key, PartialKey, Value> {
   add: AddFunc<Value>;
   update: UpdateFunc<Value, Update>;
   delete: DeleteFunc<Key>;
 
   constructor(
-    options: ReadGetAllAddUpdateDeleteStorageCacheOptions<Key, PartialKey, Value, Update>,
+    options: ReadGetAllAddUpdateDeleteStorageCacheOptions<
+      Key,
+      PartialKey,
+      Value,
+      Update,
+    >,
   ) {
     super({
       readGetAllStorage: options.readGetAllStorage,
@@ -469,7 +488,7 @@ export class ReadGetAllAddUpdateDeleteStorageCache<Key, PartialKey, Value, Updat
       createDeleteChange: options.createDeleteChange,
       getKeyFromValue: options.getKeyFromValue,
       matchesPartialKey: options.matchesPartialKey,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -489,8 +508,11 @@ type ReadGetAllAddStorageCacheOptions<Key, PartialKey, Value> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadGetAllAddStorageCache<Key, PartialKey, Value>
-  extends ReadGetAllStorageCache<Key, PartialKey, Value> {
+export class ReadGetAllAddStorageCache<
+  Key,
+  PartialKey,
+  Value,
+> extends ReadGetAllStorageCache<Key, PartialKey, Value> {
   add: AddFunc<Value>;
 
   constructor(
@@ -504,7 +526,7 @@ export class ReadGetAllAddStorageCache<Key, PartialKey, Value>
       createDeleteChange: options.createDeleteChange,
       getKeyFromValue: options.getKeyFromValue,
       matchesPartialKey: options.matchesPartialKey,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -519,8 +541,11 @@ type ReadAllAddUpdateDeleteStorageCacheOptions<Key, Value, Update> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadAllAddUpdateDeleteStorageCache<Key, Value, Update>
-  extends ReadAllStorageCache<Key, Value> {
+export class ReadAllAddUpdateDeleteStorageCache<
+  Key,
+  Value,
+  Update,
+> extends ReadAllStorageCache<Key, Value> {
   add: AddFunc<Value>;
   update: UpdateFunc<Value, Update>;
   delete: DeleteFunc<Key>;
@@ -535,7 +560,7 @@ export class ReadAllAddUpdateDeleteStorageCache<Key, Value, Update>
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
       getKeyFromValue: options.getKeyFromValue,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -555,13 +580,13 @@ type ReadAllAddStorageCacheOptions<Key, Value> = {|
   getKeyFromValue: (value: Value) => Key,
 |};
 
-export class ReadAllAddStorageCache<Key, Value>
-  extends ReadAllStorageCache<Key, Value> {
+export class ReadAllAddStorageCache<Key, Value> extends ReadAllStorageCache<
+  Key,
+  Value,
+> {
   add: AddFunc<Value>;
 
-  constructor(
-    options: ReadAllAddStorageCacheOptions<Key, Value>,
-  ) {
+  constructor(options: ReadAllAddStorageCacheOptions<Key, Value>) {
     super({
       readAllStorage: options.readAllStorage,
       name: options.name,
@@ -569,7 +594,7 @@ export class ReadAllAddStorageCache<Key, Value>
       createAddChange: options.createAddChange,
       createDeleteChange: options.createDeleteChange,
       getKeyFromValue: options.getKeyFromValue,
-    })
+    });
     this.add = createAdd({
       cache: this,
       getKeyFromValue: options.getKeyFromValue,
@@ -579,9 +604,7 @@ export class ReadAllAddStorageCache<Key, Value>
 }
 
 type BlockLikeKey = {|
-  hashOrIndex:
-    $PropertyType<Block, 'hash'> |
-    $PropertyType<Block, 'index'>,
+  hashOrIndex: $PropertyType<Block, 'hash'> | $PropertyType<Block, 'index'>,
 |};
 type BlockLike = {
   +hash: $PropertyType<Block, 'hash'>,
@@ -592,8 +615,9 @@ type BlockLikeStorageCacheOptions<Value: BlockLike> = {|
   ...BaseReadStorageCacheOptions<BlockLikeKey, Value>,
 |};
 
-export class BlockLikeStorageCache<Value: BlockLike>
-  extends BaseReadStorageCache<BlockLikeKey, Value> {
+export class BlockLikeStorageCache<
+  Value: BlockLike,
+> extends BaseReadStorageCache<BlockLikeKey, Value> {
   _create: (value: Value) => Value;
   _indexValues: { [index: string]: TrackedChange<BlockLikeKey, Value> };
 

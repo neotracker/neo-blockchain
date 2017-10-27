@@ -80,7 +80,7 @@ export default class Network<Message, PeerData> {
     this._connectPeersDelayMS = options.connectPeersDelayMS || 1000;
     this._maxConnectedPeers = options.maxConnectedPeers || 10;
     this._seeds = options.seeds;
-    this._socketTimeoutMS = options.socketTimeoutMS || (1000 * 60);
+    this._socketTimeoutMS = options.socketTimeoutMS || 1000 * 60;
 
     this._connectedPeers = {};
     this._connectingPeers = {};
@@ -151,12 +151,10 @@ export default class Network<Message, PeerData> {
         this._connectPeersTimeout = null;
       }
 
-      utils.keys(this._connectedPeers).forEach(
-        (endpoint) => {
-          this._connectedPeers[endpoint].close();
-          delete this._connectedPeers[endpoint];
-        },
-      );
+      utils.keys(this._connectedPeers).forEach(endpoint => {
+        this._connectedPeers[endpoint].close();
+        delete this._connectedPeers[endpoint];
+      });
 
       if (this._tcpServer != null) {
         this._tcpServer.close();
@@ -193,7 +191,7 @@ export default class Network<Message, PeerData> {
       return;
     }
 
-    const tcpServer = net.createServer({ pauseOnConnect: true }, (socket) => {
+    const tcpServer = net.createServer({ pauseOnConnect: true }, socket => {
       const host = socket.remoteAddress;
       if (host == null) {
         socket.end();
@@ -207,11 +205,11 @@ export default class Network<Message, PeerData> {
       this._connectToPeer({ endpoint, socket });
     });
     this._tcpServer = tcpServer;
-    tcpServer.on('error', (error) => {
+    tcpServer.on('error', error => {
       this.__onEvent({
         event: 'TCP_SERVER_ERROR',
         message: `TCP peer server encountered an error: $${error.message}`,
-        meta: { type: 'error', error },
+        data: { error },
       });
     });
     tcpServer.listen(listenTCP.port, listenTCP.host);
@@ -232,20 +230,17 @@ export default class Network<Message, PeerData> {
         // eslint-disable-next-line
         await this._connectToPeers();
         // eslint-disable-next-line
-        await new Promise((resolve) => {
-          this._connectPeersTimeout = setTimeout(
-            () => {
-              this._connectPeersTimeout = null;
-              resolve();
-            },
-            this._connectPeersDelayMS,
-          );
+        await new Promise(resolve => {
+          this._connectPeersTimeout = setTimeout(() => {
+            this._connectPeersTimeout = null;
+            resolve();
+          }, this._connectPeersDelayMS);
         });
       } catch (error) {
         this.__onEvent({
           event: 'CONNECT_LOOP_ERROR',
           message: `Encountered error in connect loop: ${error.message}`,
-          meta: { type: 'error', error },
+          data: { error },
         });
       }
     }
@@ -287,24 +282,19 @@ export default class Network<Message, PeerData> {
     this.__onEvent({
       event: 'PEER_CONNECT_START',
       message: `Connecting to peer at ${endpoint}`,
-      meta: { type: 'extra', endpoint },
     });
     try {
       const endpointConfig = getEndpointConfig(endpoint);
       if (endpointConfig.type === 'tcp') {
-        await this._startPeerConnection(this._createTCPPeer(
-          endpoint,
-          socket,
-        ));
+        await this._startPeerConnection(this._createTCPPeer(endpoint, socket));
       } else {
         throw new UnsupportedEndpointType(endpoint);
       }
     } catch (error) {
       this.__onEvent({
         event: 'PEER_CONNECT_ERROR',
-        message:
-          `Failed to connect to peer at ${endpoint}: ${error.message}`,
-        meta: { type: 'error', error, extra: { endpoint } },
+        message: `Failed to connect to peer at ${endpoint}: ${error.message}`,
+        data: { error },
       });
     } finally {
       delete this._connectingPeers[endpoint];
@@ -334,14 +324,13 @@ export default class Network<Message, PeerData> {
     if (peer.connected) {
       const connectedPeer = new ConnectedPeer({ peer, data, relay });
       this._connectedPeers[peer.endpoint] = connectedPeer;
-      connectedPeer.peer.streamData(
-        (message) => this.__onMessageReceived(connectedPeer, message),
+      connectedPeer.peer.streamData(message =>
+        this.__onMessageReceived(connectedPeer, message),
       );
 
       this.__onEvent({
         event: 'PEER_CONNECT_SUCCESS',
         message: `Connected to peer at ${peer.endpoint}`,
-        meta: { type: 'extra', endpoint: peer.endpoint },
         extra: { connectedPeer },
       });
     }
@@ -362,11 +351,10 @@ export default class Network<Message, PeerData> {
     peer.close();
     this.__onEvent({
       event: 'PEER_ERROR',
-      message:
-        `Encountered error with peer at ${peer.endpoint}: ${error.message}`,
-      meta: { type: 'error', error, extra: { endpoint: peer.endpoint } },
+      message: `Encountered error with peer at ${peer.endpoint}: ${error.message}`,
+      data: { error },
     });
-  };
+  }
 
   _onClose(peer: Peer<Message>): void {
     const connectedPeer = this._connectedPeers[peer.endpoint];
@@ -376,8 +364,7 @@ export default class Network<Message, PeerData> {
     this.__onEvent({
       event: 'PEER_CLOSED',
       message: `Peer at ${peer.endpoint} closed.`,
-      meta: { type: 'extra', endpoint: peer.endpoint },
       extra: { peer: connectedPeer || peer },
     });
-  };
+  }
 }

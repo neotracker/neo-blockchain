@@ -18,20 +18,22 @@ export default async ({
   chain?: Chain,
 }) => {
   const transports = [];
-  transports.push(new winston.transports.Console({
-    level: 'debug',
-  }));
+  transports.push(
+    new winston.transports.Console({
+      level: 'debug',
+    }),
+  );
 
-  const log = new winston.Logger({ transports });
-  const logger = createServerLogger(log);
+  const log = createServerLogger(new winston.Logger({ transports }));
 
   const dataPath = resolveHome(dataPathIn);
-  const chain = chainIn == null
-    ? chainIn
-    : {
-      format: chainIn.format,
-      path: resolveHome(chainIn.path),
-    };
+  const chain =
+    chainIn == null
+      ? chainIn
+      : {
+          format: chainIn.format,
+          path: resolveHome(chainIn.path),
+        };
 
   let options;
   if (testNet) {
@@ -58,7 +60,7 @@ export default async ({
         'http://seed4.neo.org:20332',
         'http://seed5.neo.org:20332',
       ],
-      logger,
+      log,
       identifier: 'testnet',
       rpcSettings: {
         server: {
@@ -68,7 +70,7 @@ export default async ({
           },
         },
       },
-    }
+    };
   } else {
     options = {
       settings: main,
@@ -93,7 +95,7 @@ export default async ({
         'http://seed4.neo.org:10332',
         'http://seed5.neo.org:10332',
       ],
-      logger,
+      log,
       identifier: 'mainnet',
       rpcSettings: {
         server: {
@@ -108,4 +110,4 @@ export default async ({
 
   const node = await FullNode.create(options);
   return node;
-}
+};

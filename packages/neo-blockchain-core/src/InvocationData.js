@@ -1,8 +1,5 @@
 /* @flow */
-import {
-  type BinaryWriter,
-  BinaryReader,
-} from './utils';
+import { type BinaryWriter, BinaryReader } from './utils';
 import {
   type DeserializeWireBaseOptions,
   type DeserializeWireOptions,
@@ -10,19 +7,13 @@ import {
   type SerializableWire,
   createSerializeWire,
 } from './Serializable';
-import {
-  type InvocationResult,
-  deserializeWireBase,
-} from './invocationResult';
+import { type InvocationResult, deserializeWireBase } from './invocationResult';
 
-import common, {
-  type UInt160,
-  type UInt256,
-} from './common';
+import common, { type UInt160, type UInt256 } from './common';
 
 export type InvocationDataAdd = {|
-  hash: UInt256;
-  assetHash?: UInt256,
+  hash: UInt256,
+  assetHash?: ?UInt256,
   contractHashes: Array<UInt160>,
   blockIndex: number,
   transactionIndex: number,
@@ -60,7 +51,7 @@ export default class InvocationData
   serializeWireBase(writer: BinaryWriter): void {
     writer.writeUInt256(this.hash);
     writer.writeUInt256(this.assetHash || common.ZERO_UINT256);
-    writer.writeArray(this.contractHashes, (contractHash) => {
+    writer.writeArray(this.contractHashes, contractHash => {
       writer.writeUInt160(contractHash);
     });
     writer.writeUInt32LE(this.blockIndex);
@@ -68,7 +59,9 @@ export default class InvocationData
     this.result.serializeWireBase(writer);
   }
 
-  serializeWire: SerializeWire = createSerializeWire(this.serializeWireBase.bind(this));
+  serializeWire: SerializeWire = createSerializeWire(
+    this.serializeWireBase.bind(this),
+  );
 
   static deserializeWireBase(
     options: DeserializeWireBaseOptions,

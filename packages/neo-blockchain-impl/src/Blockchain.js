@@ -24,13 +24,12 @@ import {
   NULL_ACTION,
   TRIGGER_TYPE,
   type Blockchain as BlockchainType,
-  type Logger,
-  type LoggingContext,
+  type Log,
   type OnStepInput,
   type Storage,
   type VM,
 } from 'neo-blockchain-node-core';
-import PriorityQueue from 'js-priority-queue'
+import PriorityQueue from 'js-priority-queue';
 
 import _ from 'lodash';
 // TODO: Support in browsers?
@@ -48,8 +47,7 @@ export type CreateBlockchainOptions = {|
   settings: $PropertyType<BlockchainType, 'settings'>,
   storage: Storage,
   vm: VM,
-  logger: Logger,
-  identifier: string,
+  log: Log,
 |};
 
 export type BlockchainOptions = {|
@@ -72,9 +70,11 @@ type Vote = {|
 
 export default class Blockchain {
   settings: $PropertyType<BlockchainType, 'settings'>;
-  logger: $PropertyType<BlockchainType, 'logger'>;
-  identifier: $PropertyType<BlockchainType, 'identifier'>;
-  deserializeWireContext: $PropertyType<BlockchainType, 'deserializeWireContext'>;
+  log: $PropertyType<BlockchainType, 'log'>;
+  deserializeWireContext: $PropertyType<
+    BlockchainType,
+    'deserializeWireContext',
+  >;
   serializeJSONContext: $PropertyType<BlockchainType, 'serializeJSONContext'>;
 
   currentBlock: $PropertyType<BlockchainType, 'currentBlock'>;
@@ -102,7 +102,6 @@ export default class Blockchain {
   _blockQueue: PriorityQueue;
   _inQueue: Set<number>;
   _vm: VM;
-  _loggingContext: LoggingContext;
 
   constructor(options: BlockchainOptions) {
     this._storage = options.storage;
@@ -114,14 +113,9 @@ export default class Blockchain {
     });
     this._inQueue = new Set();
     this._vm = options.vm;
-    this._loggingContext = {
-      type: 'blockchain',
-      identifier: options.identifier,
-    };
 
     this.settings = options.settings;
-    this.logger = options.logger;
-    this.identifier = options.identifier;
+    this.log = options.log;
 
     this.account = this._storage.account;
     this.action = this._storage.action;
@@ -162,8 +156,7 @@ export default class Blockchain {
     settings,
     storage,
     vm,
-    logger,
-    identifier,
+    log,
   }: CreateBlockchainOptions): Promise<BlockchainType> {
     const [currentBlock, currentHeader] = await Promise.all([
       storage.block.tryGetLatest(),
@@ -176,8 +169,7 @@ export default class Blockchain {
       settings,
       storage,
       vm,
-      logger,
-      identifier,
+      log,
     });
 
     if (currentHeader == null) {
@@ -226,8 +218,8 @@ export default class Blockchain {
 
       this._blockQueue.queue({ block, resolve, reject, unsafe });
       this._persistBlocksAsync();
-    })
-  };
+    });
+  }
 
   // eslint-disable-next-line
   async persistHeaders(headers: Array<Header>): Promise<void> {
@@ -270,7 +262,7 @@ export default class Blockchain {
       fees: this.settings.fees,
       currentHeight: this.currentBlockIndex,
       memPool,
-    })
+    });
   }
 
   async invokeScript(script: Buffer): Promise<InvocationResult> {
@@ -297,7 +289,7 @@ export default class Blockchain {
         stackAlt: result.stackAlt,
       });
     } catch (error) {
-      return new InvocationResultError({ message: error.message })
+      return new InvocationResultError({ message: error.message });
     }
   }
 
@@ -321,13 +313,12 @@ export default class Blockchain {
         await this._persistBlock(entry.block, entry.unsafe);
         entry.resolve();
         const duration = performance.now() - start;
-        this.logger({
+        this.log({
           event: 'PERSIST_BLOCK_SUCCESS',
           message:
             `Persisted block at index ${entry.block.index} in ` +
             `${duration} ms.`,
-          meta: { type: 'extra', block: entry.block, duration },
-          context: this._loggingContext,
+          data: { index: entry.block.index, duration },
         });
 
         this.cleanBlockQueue();
@@ -339,15 +330,10 @@ export default class Blockchain {
         message = `${message} at index ${entry.block.index}`;
         entry.reject(error);
       }
-      this.logger({
+      this.log({
         event: 'PERSIST_BLOCK_ERROR',
         message: `${message}: ${error.message}`,
-        meta: {
-          type: 'error',
-          error,
-          extra: { block: entry == null ? null : entry.block.index },
-        },
-        context: this._loggingContext,
+        data: { error, index: entry == null ? null : entry.block.index },
       });
     } finally {
       this._persistingBlocks = false;
@@ -356,10 +342,7 @@ export default class Blockchain {
 
   cleanBlockQueue(): void {
     let entry = this.peekBlockQueue();
-    while (
-      entry != null &&
-      entry.block.index <= this.currentBlockIndex
-    ) {
+    while (entry != null && entry.block.index <= this.currentBlockIndex) {
       this._blockQueue.dequeue();
       entry.resolve();
       entry = this.peekBlockQueue();
@@ -390,17 +373,14 @@ export default class Blockchain {
     await this._storage.commit(blockchain.getChangeSet());
     this._currentBlock = block;
     this._currentHeader = block.header;
-  };
+  }
 
   _verifyScript = async ({
     scriptContainer,
     hash,
     witness,
   }: VerifyScriptOptions): Promise<void> => {
-    if (!common.uInt160Equal(
-      hash,
-      crypto.toScriptHash(witness.verification),
-    )) {
+    if (!common.uInt160Equal(hash, crypto.toScriptHash(witness.verification))) {
       throw new WitnessVerifyError();
     }
 
@@ -431,14 +411,12 @@ export default class Blockchain {
     if (!top.asBoolean()) {
       throw new VerifyError();
     }
-  }
+  };
 
-  calculateClaimAmount = async (
-    claims: Array<Input>,
-  ): Promise<BN> => {
-    const spentCoins = await Promise.all(claims.map(
-      claim => this._tryGetSpentCoin(claim),
-    ));
+  calculateClaimAmount = async (claims: Array<Input>): Promise<BN> => {
+    const spentCoins = await Promise.all(
+      claims.map(claim => this._tryGetSpentCoin(claim)),
+    );
     const filteredSpentCoins = spentCoins.filter(Boolean);
     if (spentCoins.length !== filteredSpentCoins.length) {
       // TODO: Better error
@@ -450,10 +428,15 @@ export default class Blockchain {
       throw new Error('Coin was already claimed');
     }
 
-    if (filteredSpentCoins.some(coin => !common.uInt256Equal(
-      coin.output.asset,
-      this.settings.governingToken.hash,
-    ))) {
+    if (
+      filteredSpentCoins.some(
+        coin =>
+          !common.uInt256Equal(
+            coin.output.asset,
+            this.settings.governingToken.hash,
+          ),
+      )
+    ) {
       // TODO: Better error
       throw new Error('Invalid claim');
     }
@@ -466,24 +449,26 @@ export default class Blockchain {
       })),
       decrementInterval: this.settings.decrementInterval,
       generationAmount: this.settings.generationAmount,
-      getSystemFee: async (index) => {
+      getSystemFee: async index => {
         const header = await this._storage.header.get({ hashOrIndex: index });
-        const blockSystemFee =
-          await this._storage.blockSystemFee.get({ hash: header.hash });
+        const blockSystemFee = await this._storage.blockSystemFee.get({
+          hash: header.hash,
+        });
         return blockSystemFee.systemFee;
       },
     });
   };
 
   _isSpent = async (input: OutputKey): Promise<boolean> => {
-    const transactionSpentCoins =
-      await this.transactionSpentCoins.tryGet({ hash: input.hash });
+    const transactionSpentCoins = await this.transactionSpentCoins.tryGet({
+      hash: input.hash,
+    });
 
     return (
       transactionSpentCoins != null &&
       transactionSpentCoins.endHeights[input.index] != null
     );
-  }
+  };
 
   _tryGetSpentCoin = async (input: Input): Promise<?SpentCoin> => {
     const [transactionSpentCoins, output] = await Promise.all([
@@ -507,7 +492,7 @@ export default class Blockchain {
       endHeight,
       claimed: !!claimed,
     };
-  }
+  };
 
   _getValidators = async (
     transactions: Array<Transaction>,
@@ -519,86 +504,99 @@ export default class Blockchain {
     const sortedVotes = _.sortBy(votes, vote => vote.publicKeys.length);
     const validatorsCount = Math.max(
       utils.weightedAverage(
-        utils.weightedFilter(
-          sortedVotes,
-          0.25,
-          0.75,
-          vote => vote.count.toNumber(),
-        ).map(([vote, weight]) => ({
-          value: vote.publicKeys.length,
-          weight,
-        })),
+        utils
+          .weightedFilter(sortedVotes, 0.25, 0.75, vote =>
+            vote.count.toNumber(),
+          )
+          .map(([vote, weight]) => ({
+            value: vote.publicKeys.length,
+            weight,
+          })),
       ),
       this.settings.standbyValidators.length,
     );
 
-    const validatorsToCount = _.fromPairs(validators.map(
-      (validator) => [
+    const validatorsToCount = _.fromPairs(
+      validators.map(validator => [
         common.ecPointToHex(validator.publicKey),
         utils.ZERO,
-      ],
-    ));
+      ]),
+    );
     for (const vote of votes) {
       for (const publicKey of _.take(vote.publicKeys, validatorsCount)) {
         const publicKeyHex = common.ecPointToHex(publicKey);
         if (validatorsToCount[publicKeyHex] != null) {
-          validatorsToCount[publicKeyHex] =
-            validatorsToCount[publicKeyHex].add(vote.count);
+          validatorsToCount[publicKeyHex] = validatorsToCount[publicKeyHex].add(
+            vote.count,
+          );
         }
       }
     }
 
     return _.take(
-      utils.entries(validatorsToCount)
-        .sort(([aKey, aValue], [bKey, bValue]) =>
-          aValue.eq(bValue)
-            ? common.ecPointCompare(aKey, bKey)
-            : -aValue.cmp(bValue)
+      utils
+        .entries(validatorsToCount)
+        .sort(
+          ([aKey, aValue], [bKey, bValue]) =>
+            aValue.eq(bValue)
+              ? common.ecPointCompare(aKey, bKey)
+              : -aValue.cmp(bValue),
         )
         // eslint-disable-next-line
         .map(([key, _]) => common.hexToECPoint(key)),
       validatorsCount,
     );
-  }
+  };
 
   _getVotes = async (
     transactions: Array<Transaction>,
   ): Promise<Array<Vote>> => {
     const inputs = await Promise.all(
-      transactions.map(transaction => transaction.getReferences({
-        getOutput: this.output.get,
-      })),
-    ).then(results => results.reduce(
-      (acc, inputResults) => acc.concat(inputResults),
-      [],
-    ).map(output => ({
-      address: output.address,
-      asset: output.asset,
-      value: output.value.neg(),
-    })));
-    const outputs = transactions.reduce(
-      (acc, transaction) => acc.concat(transaction.outputs),
-      [],
-    ).map(output => ({
-      address: output.address,
-      asset: output.asset,
-      value: output.value,
-    }));
-    const changes = _.fromPairs(utils.entries(_.groupBy(
-      inputs.concat(outputs)
-        .filter(output => common.uInt256Equal(
-          output.asset,
-          this.settings.governingToken.hash,
-        )),
-      (output) => common.uInt160ToHex(output.address),
-      // eslint-disable-next-line
-    )).map(([addressHex, addressOutputs]) => [
-      addressHex,
-      addressOutputs.reduce(
-        (acc, output) => acc.add(output.value),
-        utils.ZERO,
+      transactions.map(transaction =>
+        transaction.getReferences({
+          getOutput: this.output.get,
+        }),
       ),
-    ]));
+    ).then(results =>
+      results
+        .reduce((acc, inputResults) => acc.concat(inputResults), [])
+        .map(output => ({
+          address: output.address,
+          asset: output.asset,
+          value: output.value.neg(),
+        })),
+    );
+    const outputs = transactions
+      .reduce((acc, transaction) => acc.concat(transaction.outputs), [])
+      .map(output => ({
+        address: output.address,
+        asset: output.asset,
+        value: output.value,
+      }));
+    const changes = _.fromPairs(
+      utils
+        .entries(
+          _.groupBy(
+            inputs
+              .concat(outputs)
+              .filter(output =>
+                common.uInt256Equal(
+                  output.asset,
+                  this.settings.governingToken.hash,
+                ),
+              ),
+            output => common.uInt160ToHex(output.address),
+            // eslint-disable-next-line
+          ),
+        )
+        .map(([addressHex, addressOutputs]) => [
+          addressHex,
+          addressOutputs.reduce(
+            (acc, output) => acc.add(output.value),
+            utils.ZERO,
+          ),
+        ]),
+    );
     const votes = await this.account.all
       .filter(account => account.votes.length > 0)
       .map(account => {
@@ -607,20 +605,24 @@ export default class Blockchain {
         balance = balance.add(changes[account.hashHex] || utils.ZERO);
         return balance.lte(utils.ZERO)
           ? null
-          : ({
-            publicKeys: account.votes,
-            count: balance,
-          });
-      }).toArray().toPromise();
+          : {
+              publicKeys: account.votes,
+              count: balance,
+            };
+      })
+      .toArray()
+      .toPromise();
     if (votes.length === 0) {
-      return [{
-        publicKeys: this.settings.standbyValidators,
-        count: this.settings.governingToken.asset.amount,
-      }];
+      return [
+        {
+          publicKeys: this.settings.standbyValidators,
+          count: this.settings.governingToken.asset.amount,
+        },
+      ];
     }
 
     return votes.filter(Boolean);
-  }
+  };
 
   _createWriteBlockchain(): WriteBatchBlockchain {
     return new WriteBatchBlockchain({
@@ -643,34 +645,37 @@ export default class Blockchain {
       data.assetHash == null
         ? Promise.resolve(null)
         : this._storage.asset.get({ hash: data.assetHash }),
-      Promise.all(data.contractHashes.map(
-        contractHash => this._storage.contract.get({ hash: contractHash }),
-      )),
+      Promise.all(
+        data.contractHashes.map(contractHash =>
+          this._storage.contract.get({ hash: contractHash }),
+        ),
+      ),
       // TODO: Make this more efficient with a DataLoader
-      this._storage.action.getAll({
-        blockIndexStart: data.blockIndex,
-        transactionIndexStart: data.transactionIndex,
-        blockIndexStop: data.blockIndex,
-        transactionIndexStop: data.transactionIndex,
-      }).toArray().toPromise(),
+      this._storage.action
+        .getAll({
+          blockIndexStart: data.blockIndex,
+          transactionIndexStart: data.transactionIndex,
+          blockIndexStop: data.blockIndex,
+          transactionIndexStop: data.transactionIndex,
+        })
+        .toArray()
+        .toPromise(),
     ]);
 
     return { asset, contracts, actions, result: data.result };
-  }
+  };
 
-  _onStep = ({ context, opCode}: OnStepInput) => {
+  _onStep = ({ context, opCode }: OnStepInput) => {
     const scriptHash = common.uInt160ToString(context.scriptHash);
-    this.logger({
+    this.log({
       event: 'VM_STEP',
       level: 'silly',
       message: `Step (${scriptHash}): ${context.pc}:${opCode}`,
-      meta: {
-        type: 'extra',
+      data: {
         scriptHash,
         pc: context.pc,
         opCode,
       },
-      context: this._loggingContext,
     });
-  }
+  };
 }

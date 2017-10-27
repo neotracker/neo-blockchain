@@ -7,7 +7,7 @@ import type { Hash160Like } from '../types';
 export default (client: Client, hash: Hash160Like): UInt160 => {
   if (typeof hash === 'string') {
     try {
-      return client._addressToScriptHash(hash);
+      return client.addressToScriptHash(hash);
     } catch (error) {
       return common.stringToUInt160(hash);
     }
@@ -16,4 +16,4 @@ export default (client: Client, hash: Hash160Like): UInt160 => {
   }
 
   return common.hexToUInt160(hash);
-}
+};

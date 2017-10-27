@@ -7,13 +7,8 @@ import {
   deserializeTransactionWire,
   utils,
 } from 'neo-blockchain-core';
-import {
-  type Blockchain,
-  type Node,
-} from 'neo-blockchain-node-core';
-import type {
-  GetActionsFilter,
-} from 'neo-blockchain-client';
+import { type Blockchain, type Node } from 'neo-blockchain-node-core';
+import type { GetActionsFilter } from 'neo-blockchain-client';
 import { type Context } from 'koa';
 
 import _ from 'lodash';
@@ -39,7 +34,7 @@ export default ({
 
   let server;
   const handlers = {
-    getaccountstate: async (args) => {
+    getaccountstate: async args => {
       const hash = crypto.addressToScriptHash({
         addressVersion: blockchain.settings.addressVersion,
         address: args[0],
@@ -51,7 +46,7 @@ export default ({
 
       return account.serializeJSON(blockchain.serializeJSONContext);
     },
-    getassetstate: async (args) => {
+    getassetstate: async args => {
       const asset = await blockchain.asset.tryGet({
         hash: JSONHelper.readUInt256(args[0]),
       });
@@ -64,7 +59,7 @@ export default ({
     },
     getbestblockhash: async () =>
       JSONHelper.writeUInt256(blockchain.currentBlock.hash),
-    getblock: async (args) => {
+    getblock: async args => {
       let hashOrIndex = args[0];
       if (typeof args[0] === 'string') {
         hashOrIndex = JSONHelper.readUInt256(args[0]);
@@ -93,13 +88,13 @@ export default ({
       return block.serializeWire().toString('hex');
     },
     getblockcount: async () => blockchain.currentBlockIndex + 1,
-    getblockhash: async (args) => {
+    getblockhash: async args => {
       const height = args[0];
       checkHeight(height);
       const block = await blockchain.block.get({ hashOrIndex: height });
       return JSONHelper.writeUInt256(block.hash);
     },
-    getblocksysfee: async (args) => {
+    getblocksysfee: async args => {
       const height = args[0];
       checkHeight(height);
       const header = await blockchain.header.get({ hashOrIndex: height });
@@ -109,7 +104,7 @@ export default ({
       return blockSystemFee.systemFee.toString(10);
     },
     getconnectioncount: async () => node.connectedPeersCount,
-    getcontractstate: async (args) => {
+    getcontractstate: async args => {
       const hash = JSONHelper.readUInt160(args[0]);
       const contract = await blockchain.contract.tryGet({ hash });
       if (contract == null) {
@@ -118,10 +113,11 @@ export default ({
 
       return contract.serializeJSON(blockchain.serializeJSONContext);
     },
-    getrawmempool: async () => utils.values(node.memPool).map(
-      transaction => JSONHelper.writeUInt256(transaction.hash),
-    ),
-    getrawtransaction: async (args) => {
+    getrawmempool: async () =>
+      utils
+        .values(node.memPool)
+        .map(transaction => JSONHelper.writeUInt256(transaction.hash)),
+    getrawtransaction: async args => {
       const hash = JSONHelper.readUInt256(args[0]);
 
       let transaction = node.memPool[common.uInt256ToHex(hash)];
@@ -152,13 +148,13 @@ export default ({
 
       return transaction.serializeWire().toString('hex');
     },
-    getstorage: async (args) => {
+    getstorage: async args => {
       const hash = JSONHelper.readUInt160(args[0]);
       const key = Buffer.from(args[1], 'hex');
       const item = await blockchain.storageItem.tryGet({ hash, key });
       return item == null ? null : item.value.toString('hex');
     },
-    gettxout: async (args) => {
+    gettxout: async args => {
       const hash = JSONHelper.readUInt256(args[0]);
       const index = args[1];
       const output = await blockchain.output.get({ hash, index });
@@ -183,7 +179,7 @@ export default ({
       const result = await blockchain.invokeScript(script);
       return result.serializeJSON(blockchain.serializeJSONContext);
     },
-    sendrawtransaction: async (args) => {
+    sendrawtransaction: async args => {
       const transaction = deserializeTransactionWire({
         context: blockchain.deserializeWireContext,
         buffer: JSONHelper.readBuffer(args[0]),
@@ -199,7 +195,7 @@ export default ({
       // TODO: Implement me
       throw server.error(-101, 'Not implemented');
     },
-    validateaddress: async (args) => {
+    validateaddress: async args => {
       let scriptHash;
       try {
         scriptHash = crypto.addressToScriptHash({
@@ -216,10 +212,14 @@ export default ({
       // TODO: Implement me
       throw server.error(-101, 'Not implemented');
     },
-    getactions: async (args: [{
-      ...GetActionsFilter,
-      scriptHash: string,
-    }]) => {
+    getactions: async (
+      args: [
+        {
+          ...GetActionsFilter,
+          scriptHash: string,
+        },
+      ],
+    ) => {
       let actionsObservable = blockchain.action.getAll({
         blockIndexStart: args[0].blockIndexStart,
         transactionIndexStart: args[0].transactionIndexStart,
@@ -230,27 +230,28 @@ export default ({
       });
       if (args[0].scriptHash != null) {
         const scriptHash = JSONHelper.readUInt160(args[0].scriptHash);
-        actionsObservable = actionsObservable.filter(
-          action => common.uInt160Equal(action.scriptHash, scriptHash),
+        actionsObservable = actionsObservable.filter(action =>
+          common.uInt160Equal(action.scriptHash, scriptHash),
         );
       }
       const actions = await actionsObservable.toArray().toPromise();
-      return actions.map(
-        action => action.serializeJSON(blockchain.serializeJSONContext),
+      return actions.map(action =>
+        action.serializeJSON(blockchain.serializeJSONContext),
       );
     },
-    getallstorage: async (args) => {
+    getallstorage: async args => {
       const hash = JSONHelper.readUInt160(args[0]);
-      const items = await blockchain.storageItem.getAll({ hash })
-        .toArray().toPromise();
-      return items.map(
-        item => item.serializeJSON(blockchain.serializeJSONContext),
+      const items = await blockchain.storageItem
+        .getAll({ hash })
+        .toArray()
+        .toPromise();
+      return items.map(item =>
+        item.serializeJSON(blockchain.serializeJSONContext),
       );
     },
   };
-  server = jayson.server(_.mapValues(
-    handlers,
-    handler => async (...args: any): Promise<any> => {
+  server = jayson.server(
+    _.mapValues(handlers, handler => async (...args: any): Promise<any> => {
       try {
         const result = await handler(...args);
         return result;
@@ -269,16 +270,15 @@ export default ({
 
           Error.captureStackTrace(logError);
         }
-        // TODO: Pass through logging context using domains
-        blockchain.logger({
+        blockchain.log({
           event: 'RPC_ERROR',
-          meta: { type: 'error', error: logError },
+          data: { error: logError },
         });
 
         throw error;
       }
-    },
-  ));
+    }),
+  );
 
   return compose([
     async (ctx: Context, next: () => Promise<void>): Promise<void> => {

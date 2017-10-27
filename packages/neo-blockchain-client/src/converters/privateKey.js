@@ -7,7 +7,7 @@ import type { PrivateKeyLike } from '../types';
 export default (client: Client, privateKeyLike: PrivateKeyLike): PrivateKey => {
   if (typeof privateKeyLike === 'string') {
     try {
-      return client._wifToPrivateKey(privateKeyLike);
+      return client.wifToPrivateKey(privateKeyLike);
     } catch (error) {
       return common.stringToPrivateKey(privateKeyLike);
     }
@@ -16,4 +16,4 @@ export default (client: Client, privateKeyLike: PrivateKeyLike): PrivateKey => {
   }
 
   return common.hexToPrivateKey(privateKeyLike);
-}
+};
