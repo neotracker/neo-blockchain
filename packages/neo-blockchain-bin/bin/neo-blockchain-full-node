@@ -4,7 +4,7 @@ import type { FullNode } from 'neo-blockchain-full-node';
 
 import program from 'commander';
 
-import { createFullNode, logger, resolveHome, setupCLI } from '../src';
+import { createFullNode, log, resolveHome, setupCLI } from '../src';
 import pkg from '../package.json';
 
 const { shutdownFuncs, shutdown } = setupCLI();
@@ -47,9 +47,9 @@ program
   )
   .action(async (outpath, options) => {
     const node = await createFullNodeFromCLI(options.parent);
-    logger.info('Dumping chain.acc file...');
+    log({ event: 'DUMP_CHAIN' });
     await node.dump(resolveHome(outpath));
-    logger.info('Done.')
+    log({ event: 'DUMP_CHAIN_SUCCESS' })
     shutdown({ exitCode: 0 });
   });
 

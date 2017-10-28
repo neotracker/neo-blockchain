@@ -20,6 +20,6 @@
     "neo-blockchain-full-node": "^0.0.30",
     "neo-blockchain-neo-settings": "^0.0.30",
     "neo-blockchain-node-core": "^0.0.30",
-    "winston": "^2.4.0"
+    "winston": "^3.0.0-rc1"
   }
 }

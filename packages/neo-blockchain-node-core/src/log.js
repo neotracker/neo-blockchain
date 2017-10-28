@@ -23,12 +23,12 @@ export type LogData = {
   [key: string]: LogValue,
 };
 
-export type LogMessage = {|
+export type LogMessage = {
   event: string,
-  message?: string,
   level?: LogLevel,
-  data?: LogData,
-|};
+  error?: Error,
+  [key: string]: LogValue,
+};
 export type Log = (message: LogMessage, onLogComplete?: () => void) => void;
 
 export type Profiler = {| stop: () => void |};
@@ -47,8 +47,9 @@ export const createProfile = (log: Log): Profile => (
       if (durationMS > 1) {
         log({
           event: 'PROFILE',
-          message: `${point} took ${durationMS} ms`,
-          data: { ...(data || {}), point, durationMS },
+          ...(data || {}),
+          point,
+          durationMS,
         });
       }
     },

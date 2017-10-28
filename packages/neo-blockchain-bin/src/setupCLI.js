@@ -1,12 +1,10 @@
 /* @flow */
-import logger from './logger';
+import log from './log';
 
 export default () => {
   const shutdownFuncs = [];
   const initiateShutdown = async () => {
-    await Promise.all(shutdownFuncs.map(
-      func => func(),
-    ));
+    await Promise.all(shutdownFuncs.map(func => func()));
   };
 
   let shutdownInitiated = false;
@@ -14,23 +12,28 @@ export default () => {
     if (!shutdownInitiated) {
       shutdownInitiated = true;
       initiateShutdown()
-        .then(() => process.exit(exitCode))
-        .catch((error) => {
-          logger.error('Error during shutdown.', error);
-          process.exit(1);
+        .then(() => {
+          log({ event: 'SHUTDOWN_SUCCESS' }, () => process.exit(exitCode));
+        })
+        .catch(error => {
+          log({ event: 'SHUTDOWN_ERROR', error }, () => process.exit(1));
         });
     }
   };
 
-  process.on('unhandledRejection', (error) => {
-    logger.error('Unhandled Rejection. Exiting.', error);
+  process.on('unhandledRejection', error => {
+    log({ event: 'UNHANDLED_REJECTION.', error });
     shutdown({ exitCode: 1 });
   });
 
-  process.on('uncaughtException', (error) => {
-    logger.error('Uncaught Exception. Exiting.', error);
+  process.on('uncaughtException', error => {
+    log({ event: 'UNCAUGHT_EXCEPTION', error });
     shutdown({ exitCode: 1 });
+  });
+
+  process.on('SIGINT', () => {
+    shutdown({ exitCode: 0 });
   });
 
   return { shutdownFuncs, shutdown };
-}
+};

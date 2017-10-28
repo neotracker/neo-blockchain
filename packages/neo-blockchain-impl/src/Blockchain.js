@@ -315,25 +315,21 @@ export default class Blockchain {
         const duration = performance.now() - start;
         this.log({
           event: 'PERSIST_BLOCK_SUCCESS',
-          message:
-            `Persisted block at index ${entry.block.index} in ` +
-            `${duration} ms.`,
-          data: { index: entry.block.index, duration },
+          index: entry.block.index,
+          durationMS: duration,
         });
 
         this.cleanBlockQueue();
         entry = this.peekBlockQueue();
       }
     } catch (error) {
-      let message = 'Failed to persist block';
       if (entry != null) {
-        message = `${message} at index ${entry.block.index}`;
         entry.reject(error);
       }
       this.log({
         event: 'PERSIST_BLOCK_ERROR',
-        message: `${message}: ${error.message}`,
-        data: { error, index: entry == null ? null : entry.block.index },
+        error,
+        index: entry == null ? null : entry.block.index,
       });
     } finally {
       this._persistingBlocks = false;
@@ -670,12 +666,9 @@ export default class Blockchain {
     this.log({
       event: 'VM_STEP',
       level: 'silly',
-      message: `Step (${scriptHash}): ${context.pc}:${opCode}`,
-      data: {
-        scriptHash,
-        pc: context.pc,
-        opCode,
-      },
+      scriptHash,
+      pc: context.pc,
+      opCode,
     });
   };
 }

@@ -1,22 +1,45 @@
 /* @flow */
 import type { LogMessage } from 'neo-blockchain-node-core';
 
+// flowlint-next-line untyped-type-import:off
+import type winston from 'winston';
+
 const isError = (event: string) =>
   event.toLowerCase().includes('error') ||
   event.toLowerCase().includes('failure');
 
-export default (log: { log: (value: Object) => void }) => (
+const explodeError = (error: Error) => ({
+  message: [error.message || '(no error message)', error.stack].join('\n'),
+});
+
+export default (logger: winston.Logger) => (
   logMessage: LogMessage,
-  exitCallback?: () => void,
+  exitCallbackIn?: () => void,
 ) => {
-  let level = logMessage.level;
+  const { error } = logMessage;
+  let { level } = logMessage;
   if (level == null) {
-    level = isError(logMessage.event) ? 'error' : 'info';
+    level = isError(logMessage.event) || error != null ? 'error' : 'info';
+  }
+  let message = { ...logMessage, level };
+  if (error != null) {
+    message = { ...message, error: explodeError(error) };
   }
 
-  log.log({ ...logMessage, level });
-  // TODO: This needs to be called after all pipes have written the message.
+  logger.log(message);
+  const exitCallback = exitCallbackIn;
   if (exitCallback != null) {
-    exitCallback();
+    const numFlushes = logger.transports.length;
+    let numFlushed = 0;
+    logger.transports.forEach(transport => {
+      transport.once('finish', () => {
+        numFlushed += 1;
+        if (numFlushes === numFlushed) {
+          exitCallback();
+        }
+      });
+
+      transport.end();
+    });
   }
 };

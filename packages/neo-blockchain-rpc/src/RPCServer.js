@@ -52,21 +52,18 @@ const DEFAULT_SETTINGS = {
 export type RPCServerOptions = {|
   blockchain: Blockchain,
   node: Node,
-  rpcEndpoints: Array<string>,
   settings?: RPCSettings,
 |};
 
 export default class RPCServer {
   _blockchain: Blockchain;
   _node: Node;
-  _rpcEndpoints: Array<string>;
   _shutdownFuncs: Array<() => Promise<void>>;
   _settings: RPCSettingsInternal;
 
-  constructor({ blockchain, node, rpcEndpoints, settings }: RPCServerOptions) {
+  constructor({ blockchain, node, settings }: RPCServerOptions) {
     this._blockchain = blockchain;
     this._node = node;
-    this._rpcEndpoints = rpcEndpoints;
     this._settings = _.merge({}, DEFAULT_SETTINGS, settings || {});
     this._shutdownFuncs = [];
   }
@@ -121,10 +118,7 @@ export default class RPCServer {
     await new Promise(resolve =>
       httpServer.listen(port, host, 511, () => resolve()),
     );
-    this._blockchain.log({
-      event: 'SERVER_LISTENING',
-      message: `Server listening on ${host}:${port}`,
-    });
+    this._blockchain.log({ event: 'SERVER_LISTENING', host, port });
     this._shutdownFuncs.push(
       () => new Promise(resolve => httpServer.close(() => resolve())),
     );
@@ -143,10 +137,7 @@ export default class RPCServer {
     await new Promise(resolve =>
       httpsServer.listen(port, host, 511, () => resolve()),
     );
-    this._blockchain.log({
-      event: 'SERVER_LISTENING',
-      message: `Server listening on ${host}:${port}`,
-    });
+    this._blockchain.log({ event: 'SERVER_LISTENING', host, port });
     this._shutdownFuncs.push(
       () => new Promise(resolve => httpsServer.close(() => resolve())),
     );

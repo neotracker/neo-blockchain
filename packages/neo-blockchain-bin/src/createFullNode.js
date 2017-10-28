@@ -24,7 +24,7 @@ export default async ({
     }),
   );
 
-  const log = createServerLogger(new winston.Logger({ transports }));
+  const log = createServerLogger(winston.createLogger({ transports }));
 
   const dataPath = resolveHome(dataPathIn);
   const chain =
@@ -48,20 +48,7 @@ export default async ({
       ].map(value => createEndpoint(value)),
       dataPath,
       chain,
-      rpcEndpoints: [
-        'http://test1.cityofzion.io:8880',
-        'http://test2.cityofzion.io:8880',
-        'http://test3.cityofzion.io:8880',
-        'http://test4.cityofzion.io:8880',
-        'http://test5.cityofzion.io:8880',
-        'http://seed1.neo.org:20332',
-        'http://seed2.neo.org:20332',
-        'http://seed3.neo.org:20332',
-        'http://seed4.neo.org:20332',
-        'http://seed5.neo.org:20332',
-      ],
       log,
-      identifier: 'testnet',
       rpcSettings: {
         server: {
           http: {
@@ -83,20 +70,7 @@ export default async ({
       ].map(value => createEndpoint(value)),
       dataPath,
       chain,
-      rpcEndpoints: [
-        'http://seed1.cityofzion.io:8080',
-        'http://seed2.cityofzion.io:8080',
-        'http://seed3.cityofzion.io:8080',
-        'http://seed4.cityofzion.io:8080',
-        'http://seed5.cityofzion.io:8080',
-        'http://seed1.neo.org:10332',
-        'http://seed2.neo.org:10332',
-        'http://seed3.neo.org:10332',
-        'http://seed4.neo.org:10332',
-        'http://seed5.neo.org:10332',
-      ],
       log,
-      identifier: 'mainnet',
       rpcSettings: {
         server: {
           http: {

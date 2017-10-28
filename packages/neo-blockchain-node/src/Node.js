@@ -165,10 +165,7 @@ export default class Node implements INode {
     this._started = true;
     this._stopped = false;
 
-    this._blockchain.log({
-      event: 'NODE_START',
-      message: 'Node starting...',
-    });
+    this._blockchain.log({ event: 'NODE_START' });
     try {
       this._network.start();
     } catch (error) {
@@ -183,10 +180,7 @@ export default class Node implements INode {
     }
     this._stopped = true;
 
-    this._blockchain.log({
-      event: 'NODE_STOP',
-      message: 'Node stopping...',
-    });
+    this._blockchain.log({ event: 'NODE_STOP' });
     try {
       this._network.stop();
       this._started = false;
@@ -210,8 +204,7 @@ export default class Node implements INode {
       this._blockchain.log({
         event: 'RELAY_TRANSACTION_START',
         level: 'debug',
-        message: `Relaying transaction: ${hash}`,
-        data: { hash },
+        hash,
       });
 
       this._tempKnownTransactionHashes.add(transaction.hashHex);
@@ -231,17 +224,12 @@ export default class Node implements INode {
           this._blockchain.log({
             event: 'RELAY_TRANSACTION_SUCCESS',
             level: 'debug',
-            message: `Relayed transaction: ${hash}`,
-            data: { hash },
+            hash,
           });
           await this._trimMemPool();
         }
       } catch (error) {
-        this._blockchain.log({
-          event: 'RELAY_TRANSACTION_ERROR',
-          message: `Relaying transaction ${hash} encountered error: ${error.message}`,
-          data: { hash, error },
-        });
+        this._blockchain.log({ event: 'RELAY_TRANSACTION_ERROR', hash, error });
 
         throw error;
         // eslint-disable-next-line
@@ -255,8 +243,7 @@ export default class Node implements INode {
     this._blockchain.log({
       event: 'RELAY_MESSAGE',
       level: 'debug',
-      message: `Relaying message: ${message.value.command}`,
-      data: { command: message.value.command },
+      command: message.value.command,
     });
     this._network.relay(message.serializeWire());
   }
@@ -284,10 +271,8 @@ export default class Node implements INode {
     this._blockchain.log({
       event: 'SEND_MESSAGE',
       level: 'debug',
-      message:
-        `Sending message "${message.value.command}" to peer ` +
-        `at ${peer.endpoint}`,
-      data: { command: message.value.command, endpoint: peer.endpoint },
+      command: message.value.command,
+      endpoint: peer.endpoint,
     });
     peer.write(message.serializeWire());
   }
@@ -372,8 +357,7 @@ export default class Node implements INode {
 
     this._blockchain.log({
       event: event.event,
-      message: event.message,
-      data: event.data == null ? undefined : event.data,
+      ...(event.data || {}),
     });
   };
 
@@ -452,21 +436,16 @@ export default class Node implements INode {
     this._blockchain.log({
       event: 'MESSAGE_RECEIVED',
       level: 'debug',
-      message: `Received "${message.value.command}" from ${peer.endpoint}.`,
-      data: { endpoint: peer.endpoint, command: message.value.command },
+      endpoint: peer.endpoint,
+      command: message.value.command,
     });
 
     const onError = (error: Error) => {
       this._blockchain.log({
         event: 'MESSAGE_RECEIVED_ERROR',
-        message:
-          `Error while processing "${message.value.command}" from ` +
-          `${peer.endpoint}`,
-        data: {
-          error,
-          endpoint: peer.endpoint,
-          command: message.value.command,
-        },
+        error,
+        endpoint: peer.endpoint,
+        command: message.value.command,
       });
     };
 

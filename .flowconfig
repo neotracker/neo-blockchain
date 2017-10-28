@@ -12,6 +12,7 @@ decls/
 
 [lints]
 all=warn
+sketchy-null-bool=off
 
 [options]
 module.use_strict=true

@@ -14,11 +14,8 @@ export default function({ log }: {| log: Log |}) {
       if (error.code !== 'ECONNABORTED') {
         log({
           event: 'REQUEST_ERROR',
-          level: 'error',
-          data: {
-            error,
-            durationMS: performance.now() - startTime,
-          },
+          error,
+          durationMS: performance.now() - startTime,
         });
       }
 
@@ -26,10 +23,7 @@ export default function({ log }: {| log: Log |}) {
     } finally {
       log({
         event: 'REQUEST',
-        data: {
-          type: 'request',
-          durationMS: performance.now() - startTime,
-        },
+        durationMS: performance.now() - startTime,
       });
     }
   };
@@ -39,8 +33,7 @@ export function onError({ log }: {| log: Log |}) {
   return (error: Error) => {
     log({
       event: 'UNEXPECTED_REQUEST_ERROR',
-      level: 'error',
-      data: { error },
+      error,
     });
   };
 }

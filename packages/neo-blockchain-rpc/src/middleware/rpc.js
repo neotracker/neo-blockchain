@@ -135,11 +135,8 @@ export default ({
         // TODO: We just don't support this...
         // if (height != null) {
         //   const header = await blockchain.header.get({ hashOrIndex: height });
-        //   // $FlowFixMe
         //   json.blockhash = JSONHelper.writeUInt256(header.hash);
-        //   // $FlowFixMe
         //   json.confirmations = blockchain.currentBlockIndex - header.index + 1;
-        //   // $FlowFixMe
         //   json.blocktime = header.timestamp;
         // }
 
@@ -272,7 +269,7 @@ export default ({
         }
         blockchain.log({
           event: 'RPC_ERROR',
-          data: { error: logError },
+          error: logError,
         });
 
         throw error;

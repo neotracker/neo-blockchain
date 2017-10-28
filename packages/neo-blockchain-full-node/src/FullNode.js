@@ -23,8 +23,6 @@ export type FullNodeCreateOptions = {|
   settings: Settings,
   dataPath: string,
   log: Log,
-  identifier: string,
-  rpcEndpoints: Array<string>,
   rpcSettings?: RPCSettings,
   chain?: Chain,
 |};
@@ -63,7 +61,6 @@ export default class FullNode {
     seeds,
     dataPath,
     log,
-    rpcEndpoints,
     rpcSettings,
     chain,
   }: FullNodeCreateOptions): Promise<FullNode> {
@@ -84,7 +81,6 @@ export default class FullNode {
     const rpcServer = new RPCServer({
       blockchain,
       node,
-      rpcEndpoints,
       settings: rpcSettings,
     });
     return new FullNode({ blockchain, node, rpcServer, storage, chain });
