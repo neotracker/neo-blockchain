@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-rpc",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "keywords": [
     "neo",
     "blockchain"
@@ -23,7 +23,7 @@
     "lodash": "^4.17.4",
     "neo-blockchain-client": "^0.0.30",
     "neo-blockchain-core": "^0.0.30",
-    "neo-blockchain-node-core": "^0.0.30",
+    "neo-blockchain-node-core": "^0.0.31",
     "node-fetch": "^1.7.3"
   }
 }

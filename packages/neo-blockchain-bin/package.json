@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-bin",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "keywords": [
     "neo",
     "blockchain"
@@ -17,9 +17,9 @@
     "lodash": "^4.17.4",
     "neo-blockchain-client": "^0.0.30",
     "neo-blockchain-core": "^0.0.30",
-    "neo-blockchain-full-node": "^0.0.30",
+    "neo-blockchain-full-node": "^0.0.31",
     "neo-blockchain-neo-settings": "^0.0.30",
-    "neo-blockchain-node-core": "^0.0.30",
+    "neo-blockchain-node-core": "^0.0.31",
     "winston": "^3.0.0-rc1"
   }
 }

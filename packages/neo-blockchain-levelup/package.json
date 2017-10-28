@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-levelup",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "keywords": [
     "neo",
     "blockchain"
@@ -13,7 +13,7 @@
   "dependencies": {
     "bytewise": "^1.1.0",
     "neo-blockchain-core": "^0.0.30",
-    "neo-blockchain-node-core": "^0.0.30",
+    "neo-blockchain-node-core": "^0.0.31",
     "rxjs": "^5.4.3"
   }
 }
