@@ -1,8 +1,8 @@
 /* @flow */
-import type { Chain } from 'neo-blockchain-offline';
+import './init';
 
 import FullNode from './FullNode';
 
 export default FullNode;
 
-export type { Chain };
+export type { Chain } from 'neo-blockchain-offline';

@@ -39,7 +39,7 @@ export default class AttributeStackItem extends ObjectStackItem<Attribute> {
   }
 
   toValueStackItem(): StackItem {
-    const value = this.value;
+    const { value } = this;
     if (value instanceof ECPointAttribute) {
       return new ECPointStackItem(value.value);
     } else if (value instanceof UInt160Attribute) {

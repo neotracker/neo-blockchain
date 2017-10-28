@@ -29,35 +29,31 @@ import {
   VersionPayload,
   MerkleBlockPayload,
 } from './payload';
-import {
-  COMMAND,
-  type Command,
-  assertCommand,
-} from './Command';
+import { COMMAND, type Command, assertCommand } from './Command';
 
 export type MessageValue =
-  {| command: 'addr', payload: AddrPayload |} |
-  {| command: 'block', payload: Block |} |
-  {| command: 'consensus', payload: ConsensusPayload |} |
-  {| command: 'filteradd', payload: FilterAddPayload |} |
-  {| command: 'filterclear' |} |
-  {| command: 'filterload', payload: FilterLoadPayload |} |
-  {| command: 'getaddr' |} |
-  {| command: 'getblocks', payload: GetBlocksPayload |} |
-  {| command: 'getdata', payload: InvPayload |} |
-  {| command: 'getheaders', payload: GetBlocksPayload |} |
-  {| command: 'headers', payload: HeadersPayload |} |
-  {| command: 'inv', payload: InvPayload |} |
-  {| command: 'mempool' |} |
-  {| command: 'tx', payload: Transaction |} |
-  {| command: 'verack' |} |
-  {| command: 'version', payload: VersionPayload |} |
-  {| command: 'alert' |} |
-  {| command: 'merkleblock', payload: MerkleBlockPayload |} |
-  {| command: 'notfound' |} |
-  {| command: 'ping' |} |
-  {| command: 'pong' |} |
-  {| command: 'reject' |};
+  | {| command: 'addr', payload: AddrPayload |}
+  | {| command: 'block', payload: Block |}
+  | {| command: 'consensus', payload: ConsensusPayload |}
+  | {| command: 'filteradd', payload: FilterAddPayload |}
+  | {| command: 'filterclear' |}
+  | {| command: 'filterload', payload: FilterLoadPayload |}
+  | {| command: 'getaddr' |}
+  | {| command: 'getblocks', payload: GetBlocksPayload |}
+  | {| command: 'getdata', payload: InvPayload |}
+  | {| command: 'getheaders', payload: GetBlocksPayload |}
+  | {| command: 'headers', payload: HeadersPayload |}
+  | {| command: 'inv', payload: InvPayload |}
+  | {| command: 'mempool' |}
+  | {| command: 'tx', payload: Transaction |}
+  | {| command: 'verack' |}
+  | {| command: 'version', payload: VersionPayload |}
+  | {| command: 'alert' |}
+  | {| command: 'merkleblock', payload: MerkleBlockPayload |}
+  | {| command: 'notfound' |}
+  | {| command: 'ping' |}
+  | {| command: 'pong' |}
+  | {| command: 'reject' |};
 
 export type MessageAdd = {|
   magic: number,
@@ -101,7 +97,7 @@ export default class Message implements SerializableWire<Message> {
   }
 
   serializeWireBase(writer: BinaryWriter): void {
-    const value = this.value;
+    const { value } = this;
 
     writer.writeUInt32LE(this.magic);
     writer.writeFixedString(value.command, COMMAND_LENGTH);
@@ -176,7 +172,9 @@ export default class Message implements SerializableWire<Message> {
     writer.writeBytes(payload);
   }
 
-  serializeWire: SerializeWire = createSerializeWire(this.serializeWireBase.bind(this));
+  serializeWire: SerializeWire = createSerializeWire(
+    this.serializeWireBase.bind(this),
+  );
 
   static deserializeWireBase(options: DeserializeWireBaseOptions): Message {
     const { reader, context } = options;
@@ -250,7 +248,7 @@ export default class Message implements SerializableWire<Message> {
       case 'headers':
         value = {
           command: COMMAND.HEADERS,
-          payload: HeadersPayload.deserializeWire(payloadOptions)
+          payload: HeadersPayload.deserializeWire(payloadOptions),
         };
         break;
       case 'inv':
@@ -340,7 +338,7 @@ export class MessageTransform extends Transform {
   _transform(
     chunk: Buffer | string,
     encoding: string,
-    callback: (error: ?Error, data?: Buffer | string) => void
+    callback: (error: ?Error, data?: Buffer | string) => void,
   ): void {
     if (typeof chunk === 'string' || encoding !== 'buffer') {
       throw new InvalidMessageTransformEncodingError();
@@ -359,7 +357,9 @@ export class MessageTransform extends Transform {
     }
   }
 
-  _processBuffer(reader: BinaryReader): {|
+  _processBuffer(
+    reader: BinaryReader,
+  ): {|
     remainingBuffer: Buffer,
     messages: Array<Message>,
   |} {

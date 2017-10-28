@@ -67,10 +67,12 @@ const build = (leavesIn: Array<MerkleTreeNode>) => {
       rightChild = leaves[i * 2 + 1];
     }
     const node = new MerkleTreeNode({
-      hash: crypto.hash256(Buffer.concat([
-        common.uInt256ToBuffer(leftChild.hash),
-        common.uInt256ToBuffer(rightChild.hash),
-      ])),
+      hash: crypto.hash256(
+        Buffer.concat([
+          common.uInt256ToBuffer(leftChild.hash),
+          common.uInt256ToBuffer(rightChild.hash),
+        ]),
+      ),
       leftChild,
       rightChild,
     });
@@ -103,8 +105,7 @@ const trim = (
       node.rightChild = null;
     }
   } else {
-    const leftChild = node.leftChild;
-    const rightChild = node.rightChild;
+    const { leftChild, rightChild } = node;
     if (leftChild != null && rightChild != null) {
       trim(leftChild, index * 2, depth - 1, flags);
       trim(rightChild, index * 2 + 1, depth - 1, flags);
@@ -127,15 +128,14 @@ const _depthFirstSearch = (
   node: MerkleTreeNode,
   hashes: Array<UInt256>,
 ): void => {
-  const leftChild = node.leftChild;
-  const rightChild = node.rightChild;
+  const { leftChild, rightChild } = node;
   if (leftChild == null || rightChild == null) {
     hashes.push(node.hash);
   } else {
     _depthFirstSearch(leftChild, hashes);
     _depthFirstSearch(rightChild, hashes);
   }
-}
+};
 
 const depthFirstSearch = (node: MerkleTreeNode): Array<UInt256> => {
   const hashes = [];
@@ -159,7 +159,7 @@ export default class MerkleTree {
 
   trim(flags: Array<boolean>): MerkleTree {
     const result = this.root.clone();
-    trim(result, 0, this.depth, flags)
+    trim(result, 0, this.depth, flags);
     return new MerkleTree(result);
   }
 

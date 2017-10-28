@@ -1,22 +1,18 @@
 /* @flow */
 import type BN from 'bn.js';
-import {
-  type OpCode,
-} from 'neo-blockchain-core';
+import { type OpCode } from 'neo-blockchain-core';
 
-import {
-  type ExecutionContext,
-} from './constants';
+import { type ExecutionContext } from './constants';
 
 import disassembleByteCode from './disassembleByteCode';
 
-export class VMError extends Error {};
+export class VMError extends Error {}
 
 export class VMErrorNew extends Error {
   constructor(context: ExecutionContext, message: string) {
     const debug = disassembleByteCode(context.code).join('\n');
     const stack = context.stack.map(item => item.toString()).join('\n');
-    const pc = context.pc;
+    const { pc } = context;
     super(`${message}\nPC: ${pc}\nCode:\n${debug}\nStack:\n${stack}`);
   }
 }
@@ -31,7 +27,7 @@ export class UnknownOpError extends VMErrorNew {
   byteCode: string;
 
   constructor(context: ExecutionContext, byteCode: string) {
-    super(context, `Unknown op: ${byteCode}`)
+    super(context, `Unknown op: ${byteCode}`);
     this.byteCode = byteCode;
   }
 }
@@ -55,16 +51,13 @@ export class StackUnderflowError extends VMErrorNew {
     super(
       context,
       `Stack Underflow. Op: ${op}. Stack Length: ${stackLength}. ` +
-      `Expected: ${expected}`
+        `Expected: ${expected}`,
     );
   }
 }
 
 export class NumberTooLargeError extends VMErrorNew {
-  constructor(
-    context: ExecutionContext,
-    value: BN,
-  ) {
+  constructor(context: ExecutionContext, value: BN) {
     super(
       context,
       `Number too large to be represented in Javascript: ${value.toString(10)}`,
@@ -242,7 +235,7 @@ export class InvalidGetBlockArgumentsError extends VMErrorNew {
     super(
       context,
       `Invalid GETBLOCK Argument: ` +
-      `${arg == null ? 'null' : arg.toString('hex')}`,
+        `${arg == null ? 'null' : arg.toString('hex')}`,
     );
   }
 }

@@ -310,7 +310,7 @@ export default class Node implements INode {
     }
 
     let address;
-    const host = getEndpointConfig(peer.endpoint).host;
+    const { host } = getEndpointConfig(peer.endpoint);
     if (net.isIPv4(host)) {
       address = new NetworkAddress({
         host,

@@ -74,9 +74,10 @@ const executeNext = async ({
   }
 
   const op = lookupOp({ context });
+  // eslint-disable-next-line
   context = op.context;
 
-  const onStep = context.init.onStep;
+  const { onStep } = context.init;
   if (onStep != null) {
     await onStep({
       context: createVMContext(context),
@@ -132,7 +133,7 @@ const executeNext = async ({
     gasLeft: context.gasLeft.sub(op.fee),
   };
 
-  if (context.gasLeft.lt(utils.ZERO))  {
+  if (context.gasLeft.lt(utils.ZERO)) {
     throw new OutOfGASError();
   }
 
@@ -266,9 +267,8 @@ export default async ({
 
   let context;
   for (const [idx, script] of scripts.entries()) {
-    const scriptHash = idx + 1 < scripts.length
-      ? crypto.hash160(scripts[idx + 1].code)
-      : null;
+    const scriptHash =
+      idx + 1 < scripts.length ? crypto.hash160(scripts[idx + 1].code) : null;
     const entryScriptHash = crypto.hash160(scripts[scripts.length - 1].code);
     let options = {
       depth: scripts.length - idx,
@@ -316,4 +316,4 @@ export default async ({
     stackAlt: finalContext.stackAlt.map(item => item.toContractParameter()),
     gasLeft: finalContext.gasLeft,
   };
-}
+};

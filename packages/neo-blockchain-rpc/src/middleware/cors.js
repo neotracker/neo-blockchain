@@ -2,4 +2,6 @@
 import convert from 'koa-convert';
 import cors from 'koa-cors';
 
-export default convert(cors({ origin: true }));
+import { simpleMiddleware } from './common';
+
+export default simpleMiddleware('cors', convert(cors({ origin: true })));

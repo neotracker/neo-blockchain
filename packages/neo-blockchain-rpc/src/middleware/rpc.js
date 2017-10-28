@@ -10,21 +10,50 @@ import {
 import { type Blockchain, type Node } from 'neo-blockchain-node-core';
 import type { GetActionsFilter } from 'neo-blockchain-client';
 import { type Context } from 'koa';
+import type { Observable } from 'rxjs/Observable';
 
 import _ from 'lodash';
 import compose from 'koa-compose';
+import compress from 'koa-compress';
 import connect from 'koa-connect';
 import jayson from 'jayson/promise';
+import mount from 'koa-mount';
 
 import { RPCError, RPCUnknownError } from '../errors';
 
-export default ({
-  blockchain,
-  node,
+import bodyParser from './bodyParser';
+import { subscribeAndTake } from '../utils';
+
+export default async ({
+  blockchain$,
+  node$,
 }: {|
-  blockchain: Blockchain,
-  node: Node,
+  blockchain$: Observable<Blockchain>,
+  node$: Observable<Node>,
 |}) => {
+  let blockchain;
+  let node;
+  const [blockchainResult, nodeResult] = await Promise.all([
+    subscribeAndTake({
+      observable: blockchain$,
+      next: nextBlockchain => {
+        blockchain = nextBlockchain;
+        return nextBlockchain;
+      },
+    }),
+    subscribeAndTake({
+      observable: node$,
+      next: nextNode => {
+        node = nextNode;
+        return nextNode;
+      },
+    }),
+  ]);
+  blockchain = blockchainResult.out;
+  let blockchainSubscription = blockchainResult.subscription;
+  node = nodeResult.out;
+  let nodeSubscription = nodeResult.subscription;
+
   const checkHeight = (height: number) => {
     if (height < 0 && height > blockchain.currentBlockIndex) {
       // eslint-disable-next-line
@@ -277,16 +306,35 @@ export default ({
     }),
   );
 
-  return compose([
-    async (ctx: Context, next: () => Promise<void>): Promise<void> => {
-      const { fields } = ctx.request;
-      if (fields != null) {
-        // $FlowFixMe
-        ctx.req.body = fields;
+  return {
+    name: 'rpc',
+    middleware: mount(
+      '/rpc',
+      compose([
+        compress(),
+        bodyParser(),
+        async (ctx: Context, next: () => Promise<void>): Promise<void> => {
+          const { fields } = ctx.request;
+          if (fields != null) {
+            // $FlowFixMe
+            ctx.req.body = fields;
+          }
+
+          await next();
+        },
+        connect(server.middleware({ end: false })),
+      ]),
+    ),
+    stop: () => {
+      if (blockchainSubscription != null) {
+        blockchainSubscription.unsubscribe();
+        blockchainSubscription = null;
       }
 
-      await next();
+      if (nodeSubscription != null) {
+        nodeSubscription.unsubscribe();
+        nodeSubscription = null;
+      }
     },
-    connect(server.middleware({ end: false })),
-  ]);
+  };
 };

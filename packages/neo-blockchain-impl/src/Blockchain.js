@@ -398,7 +398,7 @@ export default class Blockchain {
       throw new VerifyError();
     }
 
-    const stack = result.stack;
+    const { stack } = result;
     if (stack.length !== 1) {
       throw new VerifyError();
     }

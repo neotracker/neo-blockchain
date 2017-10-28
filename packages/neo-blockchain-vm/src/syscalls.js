@@ -114,11 +114,7 @@ export const createSysCall = ({
   invoke,
 });
 
-const getHashOrIndex = ({
-  arg,
-}: {
-  arg: StackItem,
-}): ?(UInt256 | number) => {
+const getHashOrIndex = ({ arg }: { arg: StackItem }): ?(UInt256 | number) => {
   const buffer = arg.asBuffer();
   let hashOrIndex;
   if (buffer.length === 32) {
@@ -136,7 +132,7 @@ function getIndex<T>(index: number, values: Array<T>): T {
   }
 
   return values[index];
-};
+}
 
 const checkWitness = async ({
   context,
@@ -145,21 +141,23 @@ const checkWitness = async ({
   context: ExecutionContext,
   hash: UInt160,
 |}) => {
-  const scriptContainer = context.init.scriptContainer;
+  const { scriptContainer } = context.init;
   let scriptHashesForVerifiying;
   switch (scriptContainer.type) {
     case 0x00:
-      scriptHashesForVerifiying =
-        await scriptContainer.value.getScriptHashesForVerifying({
+      scriptHashesForVerifiying = await scriptContainer.value.getScriptHashesForVerifying(
+        {
           getOutput: context.blockchain.output.get,
           getAsset: context.blockchain.asset.get,
-        });
+        },
+      );
       break;
     case 0x01:
-      scriptHashesForVerifiying =
-        await scriptContainer.value.getScriptHashesForVerifying({
+      scriptHashesForVerifiying = await scriptContainer.value.getScriptHashesForVerifying(
+        {
           getHeader: context.blockchain.header.get,
-        });
+        },
+      );
       break;
     default:
       // eslint-disable-next-line
@@ -175,10 +173,11 @@ const checkWitnessPublicKey = ({
 }: {|
   context: ExecutionContext,
   publicKey: ECPoint,
-|}) => checkWitness({
-  context,
-  hash: crypto.getVerificationScriptHash(publicKey)
-});
+|}) =>
+  checkWitness({
+    context,
+    hash: crypto.getVerificationScriptHash(publicKey),
+  });
 
 const checkWitnessBuffer = ({
   context,
@@ -207,8 +206,8 @@ const createContract = async ({
   args: Array<StackItem>,
 |}) => {
   const script = args[0].asBuffer();
-  const parameterList = [...args[1].asBuffer()].map(
-    parameter => assertContractParameterType(parameter),
+  const parameterList = [...args[1].asBuffer()].map(parameter =>
+    assertContractParameterType(parameter),
   );
   const returnType = assertContractParameterType(
     args[2].asBigInteger().toNumber(),
@@ -262,9 +261,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(context.init.triggerType),
-      )],
+      results: [new IntegerStackItem(new BN(context.init.triggerType))],
     }),
   }),
   'Neo.Runtime.CheckWitness': createSysCall({
@@ -273,12 +270,14 @@ export const SYSCALLS = {
     out: 1,
     invoke: async ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new BooleanStackItem(
-        await checkWitnessBuffer({
-          context,
-          hashOrPublicKey: args[0].asBuffer()
-        }),
-      )],
+      results: [
+        new BooleanStackItem(
+          await checkWitnessBuffer({
+            context,
+            hashOrPublicKey: args[0].asBuffer(),
+          }),
+        ),
+      ],
     }),
   }),
   'Neo.Runtime.Notify': createSysCall({
@@ -330,9 +329,9 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(context.blockchain.currentBlock.index),
-      )],
+      results: [
+        new IntegerStackItem(new BN(context.blockchain.currentBlock.index)),
+      ],
     }),
   }),
   'Neo.Blockchain.GetHeader': createSysCall({
@@ -404,9 +403,10 @@ export const SYSCALLS = {
     name: 'Neo.Blockchain.GetValidators',
     out: 1,
     invoke: async ({ context }: OpInvokeArgs) => {
-      const validators = await context.blockchain.validator.all.map(
-        ({ publicKey }) => new ECPointStackItem(publicKey),
-      ).toArray().toPromise();
+      const validators = await context.blockchain.validator.all
+        .map(({ publicKey }) => new ECPointStackItem(publicKey))
+        .toArray()
+        .toPromise();
       return {
         context,
         results: [new ArrayStackItem(validators)],
@@ -447,9 +447,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [
-        new UInt256StackItem(args[0].asBlockBase().hash),
-      ],
+      results: [new UInt256StackItem(args[0].asBlockBase().hash)],
     }),
   }),
   'Neo.Header.GetVersion': createSysCall({
@@ -458,9 +456,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asBlockBase().version),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asBlockBase().version))],
     }),
   }),
   'Neo.Header.GetPrevHash': createSysCall({
@@ -469,9 +465,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt256StackItem(
-        args[0].asBlockBase().previousHash,
-      )],
+      results: [new UInt256StackItem(args[0].asBlockBase().previousHash)],
     }),
   }),
   'Neo.Header.GetMerkleRoot': createSysCall({
@@ -480,9 +474,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt256StackItem(
-        args[0].asBlockBase().merkleRoot,
-      )],
+      results: [new UInt256StackItem(args[0].asBlockBase().merkleRoot)],
     }),
   }),
   'Neo.Header.GetTimestamp': createSysCall({
@@ -491,9 +483,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asBlockBase().timestamp),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asBlockBase().timestamp))],
     }),
   }),
   'Neo.Header.GetConsensusData': createSysCall({
@@ -502,9 +492,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        args[0].asBlockBase().consensusData,
-      )],
+      results: [new IntegerStackItem(args[0].asBlockBase().consensusData)],
     }),
   }),
   'Neo.Header.GetNextConsensus': createSysCall({
@@ -513,9 +501,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(
-        args[0].asBlockBase().nextConsensus,
-      )],
+      results: [new UInt160StackItem(args[0].asBlockBase().nextConsensus)],
     }),
   }),
   'Neo.Block.GetTransactionCount': createSysCall({
@@ -524,9 +510,9 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asBlock().transactions.length),
-      )],
+      results: [
+        new IntegerStackItem(new BN(args[0].asBlock().transactions.length)),
+      ],
     }),
   }),
   'Neo.Block.GetTransactions': createSysCall({
@@ -535,11 +521,15 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new ArrayStackItem(
-        args[0].asBlock().transactions.map(
-          transaction => new TransactionStackItem(transaction),
+      results: [
+        new ArrayStackItem(
+          args[0]
+            .asBlock()
+            .transactions.map(
+              transaction => new TransactionStackItem(transaction),
+            ),
         ),
-      )],
+      ],
     }),
   }),
   'Neo.Block.GetTransaction': createSysCall({
@@ -548,12 +538,14 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new TransactionStackItem(
-        getIndex(
-          args[1].asBigInteger().toNumber(),
-          args[0].asBlock().transactions,
+      results: [
+        new TransactionStackItem(
+          getIndex(
+            args[1].asBigInteger().toNumber(),
+            args[0].asBlock().transactions,
+          ),
         ),
-      )],
+      ],
     }),
   }),
   'Neo.Transaction.GetHash': createSysCall({
@@ -562,9 +554,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt256StackItem(
-        args[0].asTransaction().hash,
-      )],
+      results: [new UInt256StackItem(args[0].asTransaction().hash)],
     }),
   }),
   'Neo.Transaction.GetType': createSysCall({
@@ -573,9 +563,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asTransaction().type),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asTransaction().type))],
     }),
   }),
   'Neo.Transaction.GetAttributes': createSysCall({
@@ -584,11 +572,13 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new ArrayStackItem(
-        args[0].asTransaction().attributes.map(
-          attribute => new AttributeStackItem(attribute),
+      results: [
+        new ArrayStackItem(
+          args[0]
+            .asTransaction()
+            .attributes.map(attribute => new AttributeStackItem(attribute)),
         ),
-      )],
+      ],
     }),
   }),
   'Neo.Transaction.GetInputs': createSysCall({
@@ -597,11 +587,13 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new ArrayStackItem(
-        args[0].asTransaction().inputs.map(
-          input => new InputStackItem(input),
+      results: [
+        new ArrayStackItem(
+          args[0]
+            .asTransaction()
+            .inputs.map(input => new InputStackItem(input)),
         ),
-      )],
+      ],
     }),
   }),
   'Neo.Transaction.GetOutputs': createSysCall({
@@ -610,11 +602,13 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new ArrayStackItem(
-        args[0].asTransaction().outputs.map(
-          (output) => new OutputStackItem(output),
+      results: [
+        new ArrayStackItem(
+          args[0]
+            .asTransaction()
+            .outputs.map(output => new OutputStackItem(output)),
         ),
-      )],
+      ],
     }),
   }),
   'Neo.Transaction.GetReferences': createSysCall({
@@ -627,9 +621,11 @@ export const SYSCALLS = {
       });
       return {
         context,
-        results: [new ArrayStackItem(
-          outputs.map((output) => new OutputStackItem(output)),
-        )],
+        results: [
+          new ArrayStackItem(
+            outputs.map(output => new OutputStackItem(output)),
+          ),
+        ],
       };
     },
   }),
@@ -639,9 +635,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asAttribute().usage),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asAttribute().usage))],
     }),
   }),
   'Neo.Attribute.GetData': createSysCall({
@@ -659,9 +653,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt256StackItem(
-        args[0].asInput().hash,
-      )],
+      results: [new UInt256StackItem(args[0].asInput().hash)],
     }),
   }),
   'Neo.Input.GetIndex': createSysCall({
@@ -670,9 +662,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asInput().index),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asInput().index))],
     }),
   }),
   'Neo.Output.GetAssetId': createSysCall({
@@ -681,9 +671,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt256StackItem(
-        args[0].asOutput().asset,
-      )],
+      results: [new UInt256StackItem(args[0].asOutput().asset)],
     }),
   }),
   'Neo.Output.GetValue': createSysCall({
@@ -692,9 +680,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        args[0].asOutput().value,
-      )],
+      results: [new IntegerStackItem(args[0].asOutput().value)],
     }),
   }),
   'Neo.Output.GetScriptHash': createSysCall({
@@ -703,9 +689,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(
-        args[0].asOutput().address,
-      )],
+      results: [new UInt160StackItem(args[0].asOutput().address)],
     }),
   }),
   'Neo.Account.GetScriptHash': createSysCall({
@@ -714,9 +698,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(
-        args[0].asAccount().hash,
-      )],
+      results: [new UInt160StackItem(args[0].asAccount().hash)],
     }),
   }),
   'Neo.Account.GetVotes': createSysCall({
@@ -725,11 +707,11 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new ArrayStackItem(
-        args[0].asAccount().votes.map(
-          vote => new ECPointStackItem(vote),
+      results: [
+        new ArrayStackItem(
+          args[0].asAccount().votes.map(vote => new ECPointStackItem(vote)),
         ),
-      )],
+      ],
     }),
   }),
   'Neo.Account.GetBalance': createSysCall({
@@ -755,9 +737,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt256StackItem(
-        args[0].asAsset().hash,
-      )],
+      results: [new UInt256StackItem(args[0].asAsset().hash)],
     }),
   }),
   'Neo.Asset.GetAssetType': createSysCall({
@@ -766,9 +746,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asAsset().type),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asAsset().type))],
     }),
   }),
   'Neo.Asset.GetAmount': createSysCall({
@@ -777,9 +755,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asAsset().amount),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asAsset().amount))],
     }),
   }),
   'Neo.Asset.GetAvailable': createSysCall({
@@ -788,9 +764,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asAsset().available),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asAsset().available))],
     }),
   }),
   'Neo.Asset.GetPrecision': createSysCall({
@@ -799,9 +773,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new IntegerStackItem(
-        new BN(args[0].asAsset().precision),
-      )],
+      results: [new IntegerStackItem(new BN(args[0].asAsset().precision))],
     }),
   }),
   'Neo.Asset.GetOwner': createSysCall({
@@ -810,9 +782,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new ECPointStackItem(
-        args[0].asAsset().owner,
-      )],
+      results: [new ECPointStackItem(args[0].asAsset().owner)],
     }),
   }),
   'Neo.Asset.GetAdmin': createSysCall({
@@ -821,9 +791,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(
-        args[0].asAsset().admin,
-      )],
+      results: [new UInt160StackItem(args[0].asAsset().admin)],
     }),
   }),
   'Neo.Asset.GetIssuer': createSysCall({
@@ -832,9 +800,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(
-        args[0].asAsset().issuer,
-      )],
+      results: [new UInt160StackItem(args[0].asAsset().issuer)],
     }),
   }),
   'Neo.Contract.GetScript': createSysCall({
@@ -843,9 +809,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context, args }: OpInvokeArgs) => ({
       context,
-      results: [new BufferStackItem(
-        args[0].asContract().script,
-      )],
+      results: [new BufferStackItem(args[0].asContract().script)],
     }),
   }),
   'Neo.Storage.GetContext': createSysCall({
@@ -853,9 +817,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: ({ context }: OpInvokeArgs) => ({
       context,
-      results: [new StorageContextStackItem(
-        context.scriptHash,
-      )],
+      results: [new StorageContextStackItem(context.scriptHash)],
     }),
   }),
   'Neo.Storage.Get': createSysCall({
@@ -870,7 +832,7 @@ export const SYSCALLS = {
         hash,
         key: args[1].asBuffer(),
       });
-      const result = item == null ? new Buffer([]) : item.value;
+      const result = item == null ? Buffer.from([]) : item.value;
       return {
         context,
         results: [new BufferStackItem(result)],
@@ -900,10 +862,9 @@ export const SYSCALLS = {
         throw new BadWitnessCheckError();
       }
 
-      const newAccount = await context.blockchain.account.update(
-        account,
-        { votes },
-      );
+      const newAccount = await context.blockchain.account.update(account, {
+        votes,
+      });
       if (newAccount.isDeletable()) {
         await context.blockchain.account.delete({ hash: address });
       }
@@ -931,14 +892,14 @@ export const SYSCALLS = {
         context,
         results: [new ValidatorStackItem(validator)],
       };
-    }
+    },
   }),
   'Neo.Asset.Create': createSysCall({
     name: 'Neo.Asset.Create',
     in: 7,
     out: 1,
     invoke: async ({ context, args }: OpInvokeArgs) => {
-      const scriptContainer = context.init.scriptContainer;
+      const { scriptContainer } = context.init;
       if (scriptContainer.type !== SCRIPT_CONTAINER_TYPE.TRANSACTION) {
         throw new UnexpectedScriptContainerError();
       }
@@ -988,17 +949,18 @@ export const SYSCALLS = {
     in: 2,
     out: 1,
     invoke: async ({ context, args }: OpInvokeArgs) => {
-      const hash = args[0].asAsset().hash;
+      const { hash } = args[0].asAsset();
       const years = args[1].asBigInteger();
 
       const asset = await context.blockchain.asset.get({ hash });
-      let expiration = asset.expiration;
+      let { expiration } = asset;
       if (expiration < context.blockchain.currentBlock.index + 1) {
         expiration = context.blockchain.currentBlock.index + 1;
       }
 
-      let newExpiration =
-        (new BN(expiration)).add(years.mul(new BN(BLOCK_HEIGHT_YEAR)));
+      let newExpiration = new BN(expiration).add(
+        years.mul(new BN(BLOCK_HEIGHT_YEAR)),
+      );
 
       if (newExpiration.gt(utils.UINT_MAX)) {
         newExpiration = utils.UINT_MAX;
@@ -1042,17 +1004,22 @@ export const SYSCALLS = {
       let context = contextIn;
       const { contract, created } = await createContract({ context, args });
       if (contract.hasStorage && created) {
-        await context.blockchain.storageItem.getAll({
-          hash: context.scriptHash
-        }).concatMap((item) => Observable.fromPromise(
-          context.blockchain.storageItem.add(
-            new StorageItem({
-              hash: contract.hash,
-              key: item.key,
-              value: item.value,
-            }),
-          ),
-        )).toPromise();
+        await context.blockchain.storageItem
+          .getAll({
+            hash: context.scriptHash,
+          })
+          .concatMap(item =>
+            Observable.fromPromise(
+              context.blockchain.storageItem.add(
+                new StorageItem({
+                  hash: contract.hash,
+                  key: item.key,
+                  value: item.value,
+                }),
+              ),
+            ),
+          )
+          .toPromise();
         context = {
           ...context,
           createdContracts: {
@@ -1095,14 +1062,17 @@ export const SYSCALLS = {
         await Promise.all([
           context.blockchain.contract.delete({ hash }),
           contract.hasStorage
-            ? context.blockchain.storageItem.getAll({ hash }).concatMap(
-              (item) => Observable.fromPromise(
-                context.blockchain.storageItem.delete({
-                  hash,
-                  key: item.key,
-                }),
-              ),
-            ).toPromise()
+            ? context.blockchain.storageItem
+                .getAll({ hash })
+                .concatMap(item =>
+                  Observable.fromPromise(
+                    context.blockchain.storageItem.delete({
+                      hash,
+                      key: item.key,
+                    }),
+                  ),
+                )
+                .toPromise()
             : Promise.resolve(),
         ]);
       }
@@ -1146,7 +1116,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: async ({ context }: OpInvokeArgs) => {
       let result;
-      const scriptContainer = context.init.scriptContainer;
+      const { scriptContainer } = context.init;
       switch (scriptContainer.type) {
         case SCRIPT_CONTAINER_TYPE.TRANSACTION:
           result = new TransactionStackItem(scriptContainer.value);
@@ -1157,9 +1127,7 @@ export const SYSCALLS = {
         default:
           // eslint-disable-next-line
           (scriptContainer.type: empty);
-          throw new InvalidScriptContainerTypeError(
-            scriptContainer.type,
-          );
+          throw new InvalidScriptContainerTypeError(scriptContainer.type);
       }
       return { context, results: [result] };
     },
@@ -1169,7 +1137,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: async ({ context }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(context.scriptHash)]
+      results: [new UInt160StackItem(context.scriptHash)],
     }),
   }),
   'System.ExecutionEngine.GetCallingScriptHash': createSysCall({
@@ -1180,7 +1148,7 @@ export const SYSCALLS = {
       results: [
         context.callingScriptHash == null
           ? new BufferStackItem(Buffer.alloc(0, 0))
-          : new UInt160StackItem(context.callingScriptHash)
+          : new UInt160StackItem(context.callingScriptHash),
       ],
     }),
   }),
@@ -1189,7 +1157,7 @@ export const SYSCALLS = {
     out: 1,
     invoke: async ({ context }: OpInvokeArgs) => ({
       context,
-      results: [new UInt160StackItem(context.entryScriptHash)]
+      results: [new UInt160StackItem(context.entryScriptHash)],
     }),
   }),
 };
@@ -1257,11 +1225,7 @@ export const SYSCALL_ALIASES = {
 
 const SYS_CALL_STRING_LENGTH = 252;
 
-export const lookupSysCall = ({
-  context,
-}: {|
-  context: ExecutionContext,
-|}) => {
+export const lookupSysCall = ({ context }: {| context: ExecutionContext |}) => {
   const { code, pc } = context;
   const reader = new BinaryReader(code, pc);
 

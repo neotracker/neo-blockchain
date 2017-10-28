@@ -24,17 +24,9 @@ import TransactionBase, {
 import { InvalidFormatError, VerifyError } from '../errors';
 import type Witness from '../Witness';
 
-import common, {
-  type ECPoint,
-  type UInt160,
-  type UInt160Hex,
-} from '../common';
+import common, { type ECPoint, type UInt160, type UInt160Hex } from '../common';
 import crypto from '../crypto';
-import utils, {
-  type BinaryWriter,
-  IOHelper,
-  JSONHelper,
-} from '../utils';
+import utils, { type BinaryWriter, IOHelper, JSONHelper } from '../utils';
 
 type Asset = {|
   +type: AssetType,
@@ -63,8 +55,10 @@ export type RegisterTransactionJSON = {|
   |},
 |};
 
-export default class RegisterTransaction
-  extends TransactionBase<typeof TRANSACTION_TYPE.REGISTER, RegisterTransactionJSON> {
+export default class RegisterTransaction extends TransactionBase<
+  typeof TRANSACTION_TYPE.REGISTER,
+  RegisterTransactionJSON,
+> {
   asset: Asset;
 
   __size: () => number;
@@ -104,25 +98,26 @@ export default class RegisterTransaction
       throw new InvalidFormatError();
     }
 
-    this.__size = utils.lazy(() => (
-      super.size +
-      IOHelper.sizeOfUInt8 +
-      IOHelper.sizeOfUInt8 +
-      IOHelper.sizeOfVarString(this.asset.name) +
-      IOHelper.sizeOfFixed8 +
-      IOHelper.sizeOfUInt8 +
-      IOHelper.sizeOfECPoint(this.asset.owner) +
-      IOHelper.sizeOfUInt160
-    ));
-    this.__registerGetScriptHashesForVerifying = utils.lazyAsync(async (
-      options: TransactionGetScriptHashesForVerifyingOptions,
-    ) => {
-      const hashes = await super.getScriptHashesForVerifying(options);
-      const scriptHash = common.uInt160ToHex(
-        crypto.getVerificationScriptHash(this.asset.owner),
-      );
-      return new Set([...hashes, scriptHash]);
-    });
+    this.__size = utils.lazy(
+      () =>
+        super.size +
+        IOHelper.sizeOfUInt8 +
+        IOHelper.sizeOfUInt8 +
+        IOHelper.sizeOfVarString(this.asset.name) +
+        IOHelper.sizeOfFixed8 +
+        IOHelper.sizeOfUInt8 +
+        IOHelper.sizeOfECPoint(this.asset.owner) +
+        IOHelper.sizeOfUInt160,
+    );
+    this.__registerGetScriptHashesForVerifying = utils.lazyAsync(
+      async (options: TransactionGetScriptHashesForVerifyingOptions) => {
+        const hashes = await super.getScriptHashesForVerifying(options);
+        const scriptHash = common.uInt160ToHex(
+          crypto.getVerificationScriptHash(this.asset.owner),
+        );
+        return new Set([...hashes, scriptHash]);
+      },
+    );
   }
 
   get size(): number {
@@ -153,8 +148,9 @@ export default class RegisterTransaction
   static deserializeWireBase(options: DeserializeWireBaseOptions): this {
     const { reader } = options;
 
-    const { type, version } =
-      super.deserializeTransactionBaseStartWireBase(options);
+    const { type, version } = super.deserializeTransactionBaseStartWireBase(
+      options,
+    );
     if (type !== TRANSACTION_TYPE.REGISTER) {
       throw new InvalidFormatError();
     }
@@ -166,8 +162,12 @@ export default class RegisterTransaction
     const owner = reader.readECPoint();
     const admin = reader.readUInt160();
 
-    const { attributes, inputs, outputs, scripts } =
-      super.deserializeTransactionBaseEndWireBase(options);
+    const {
+      attributes,
+      inputs,
+      outputs,
+      scripts,
+    } = super.deserializeTransactionBaseEndWireBase(options);
 
     return new this({
       version,
@@ -194,7 +194,7 @@ export default class RegisterTransaction
       context,
     );
 
-    let name = this.asset.name;
+    let { name } = this.asset;
     try {
       name = JSON.parse(name);
     } catch (error) {

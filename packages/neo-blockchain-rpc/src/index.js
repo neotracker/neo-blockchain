@@ -1,5 +1,8 @@
 /* @flow */
-export { default as RPCServer } from './RPCServer';
-export { rpc } from './middleware';
+import './init';
 
-export type { RPCSettings } from './RPCServer';
+export { default as RPCServer } from './RPCServer';
+export { subscribeAndTake } from './utils';
+
+export type { CreateLogForContext, CreateProfile } from './middleware';
+export type { Options as RPCServerOptions, ServerOptions } from './RPCServer';

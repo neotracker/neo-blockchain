@@ -314,7 +314,9 @@ export default class Network<Message, PeerData> {
     let relay;
     try {
       const result = await this.__negotiate(peer);
+      // eslint-disable-next-line
       data = result.data;
+      // eslint-disable-next-line
       relay = result.relay;
     } catch (error) {
       peer.close();
