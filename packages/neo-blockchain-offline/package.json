@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-offline",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "keywords": [
     "neo",
     "blockchain"
@@ -12,7 +12,7 @@
   "main": "./lib/index.js",
   "dependencies": {
     "lodash": "^4.17.4",
-    "neo-blockchain-core": "^0.0.35",
-    "neo-blockchain-node-core": "^0.0.35"
+    "neo-blockchain-core": "^0.0.36",
+    "neo-blockchain-node-core": "^0.0.36"
   }
 }

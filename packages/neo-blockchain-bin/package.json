@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-bin",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "keywords": [
     "neo",
     "blockchain"
@@ -15,11 +15,11 @@
   "dependencies": {
     "commander": "^2.11.0",
     "lodash": "^4.17.4",
-    "neo-blockchain-client": "^0.0.35",
-    "neo-blockchain-core": "^0.0.35",
-    "neo-blockchain-full-node": "^0.0.35",
-    "neo-blockchain-neo-settings": "^0.0.35",
-    "neo-blockchain-node-core": "^0.0.35",
+    "neo-blockchain-client": "^0.0.36",
+    "neo-blockchain-core": "^0.0.36",
+    "neo-blockchain-full-node": "^0.0.36",
+    "neo-blockchain-neo-settings": "^0.0.36",
+    "neo-blockchain-node-core": "^0.0.36",
     "rxjs": "^5.5.2",
     "winston": "^3.0.0-rc1"
   }
