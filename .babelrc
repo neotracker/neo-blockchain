@@ -15,12 +15,6 @@
     "transform-object-rest-spread",
     "transform-decorators-legacy",
     "transform-async-to-generator",
-    "transform-async-generator-functions",
-    [
-      "transform-builtin-extend",
-      {
-        "globals": ["Error"],
-      },
-    ],
+    "transform-async-generator-functions"
   ]
 }
