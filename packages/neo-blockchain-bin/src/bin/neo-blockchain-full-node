@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 /* @flow */
+import 'regenerator-runtime/runtime';
+
 import type { FullNode } from 'neo-blockchain-full-node';
 
 import program from 'commander';

@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 /* @flow */
+import 'regenerator-runtime/runtime';
+
 import program from 'commander';
 
 import setupCLI from '../setupCLI';

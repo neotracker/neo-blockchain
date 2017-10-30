@@ -1,7 +1,16 @@
 {
   "presets": [
     "flow",
-    ["env", { "targets": { "node": true } }]
+    ["env", {
+      "targets": {
+        "node": "8.0.0",
+        "browsers": [
+          "> 1%",
+          "last 2 versions",
+          "not ie <= 10"
+        ]
+      }
+    }]
   ],
   "plugins": [
     "transform-async-generator-functions",
