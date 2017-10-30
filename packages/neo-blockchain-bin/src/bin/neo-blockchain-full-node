@@ -1,15 +1,15 @@
 #! /usr/bin/env node
 /* @flow */
-import 'regenerator-runtime/runtime';
-
 import type { FullNode } from 'neo-blockchain-full-node';
 
 import program from 'commander';
 
-import createFullNode from '../createFullNode';
-import log from '../log';
-import resolveHome from '../resolveHome';
-import setupCLI from '../setupCLI';
+import {
+  createFullNode,
+  log,
+  resolveHome,
+  setupCLI,
+} from '../';
 import pkg from '../../package.json';
 
 const { shutdownFuncs, shutdown } = setupCLI();

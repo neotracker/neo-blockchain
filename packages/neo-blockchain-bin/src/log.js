@@ -1,13 +1,13 @@
 /* @flow */
-import winston from 'winston';
+import { createLogger, transports as winstonTransports } from 'winston';
 
 import createServerLogger from './createServerLogger';
 
 const transports = [];
 transports.push(
-  new winston.transports.Console({
+  new winstonTransports.Console({
     level: 'info',
   }),
 );
 
-export default createServerLogger(winston.createLogger({ transports }));
+export default createServerLogger(createLogger({ transports }));

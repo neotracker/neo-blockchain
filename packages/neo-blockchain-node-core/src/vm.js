@@ -1,8 +1,6 @@
 /* @flow */
 import type BN from 'bn.js';
 import {
-  BYTECODE_TO_OPCODE,
-  OPCODE_TO_BYTECODE,
   type ContractParameter,
   type OpCode,
   type ScriptContainer,
@@ -13,16 +11,14 @@ import {
 
 import type { WriteBlockchain } from './Blockchain';
 
-export { BYTECODE_TO_OPCODE, OPCODE_TO_BYTECODE };
-
 export const TRIGGER_TYPE = {
   VERIFICATION: 0x00,
   APPLICATION: 0x10,
 };
 
 export type TriggerType =
-  0x00 | // Verification
-  0x10; // Application
+  | 0x00 // Verification
+  | 0x10; // Application
 
 export type Script = {|
   code: Buffer,

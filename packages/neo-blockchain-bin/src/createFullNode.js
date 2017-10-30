@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { createEndpoint, createProfile } from 'neo-blockchain-node-core';
 import { main, test } from 'neo-blockchain-neo-settings';
-import winston from 'winston';
+import { createLogger, transports as winstonTransports } from 'winston';
 
 import createServerLogger from './createServerLogger';
 import resolveHome from './resolveHome';
@@ -20,12 +20,12 @@ export default async ({
 }) => {
   const transports = [];
   transports.push(
-    new winston.transports.Console({
+    new winstonTransports.Console({
       level: 'debug',
     }),
   );
 
-  const log = createServerLogger(winston.createLogger({ transports }));
+  const log = createServerLogger(createLogger({ transports }));
 
   const dataPath = resolveHome(dataPathIn);
   const chain =

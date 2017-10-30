@@ -12,7 +12,10 @@
   "bin": {
     "neo-blockchain": "./lib/bin/neo-blockchain"
   },
+  "main": "./dist/index.js",
+  "module": "./dist/es.js",
   "dependencies": {
+    "babel-runtime": "^7.0.0-beta.3",
     "commander": "^2.11.0",
     "lodash": "^4.17.4",
     "neo-blockchain-client": "^0.0.38",
@@ -20,7 +23,6 @@
     "neo-blockchain-full-node": "^0.0.38",
     "neo-blockchain-neo-settings": "^0.0.38",
     "neo-blockchain-node-core": "^0.0.38",
-    "regenerator-runtime": "^0.11.0",
     "rxjs": "^5.5.2",
     "winston": "^3.0.0-rc1"
   }

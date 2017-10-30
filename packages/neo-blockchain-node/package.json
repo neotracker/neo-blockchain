@@ -9,8 +9,10 @@
   "repository": "https://github.com/neotracker/neo-blockchain",
   "bugs": "https://github.com/neotracker/neo-blockchain/issues",
   "license": "MIT",
-  "main": "./lib/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/es.js",
   "dependencies": {
+    "babel-runtime": "^7.0.0-beta.3",
     "bloem": "^0.2.4",
     "bloom-filter": "^0.2.0",
     "bn.js": "^4.11.8",

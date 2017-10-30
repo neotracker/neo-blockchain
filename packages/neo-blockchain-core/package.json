@@ -9,9 +9,11 @@
   "repository": "https://github.com/neotracker/neo-blockchain",
   "bugs": "https://github.com/neotracker/neo-blockchain/issues",
   "license": "MIT",
-  "main": "./lib/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/es.js",
   "dependencies": {
     "async": "^2.5.0",
+    "babel-runtime": "^7.0.0-beta.3",
     "bignumber.js": "^4.1.0",
     "bn.js": "^4.11.8",
     "bs58": "^4.0.1",

@@ -2,19 +2,16 @@
   "presets": [
     "flow",
     ["env", {
-      "targets": {
-        "node": "8.0.0",
-        "browsers": [
-          "> 1%",
-          "last 2 versions",
-          "not ie <= 10"
-        ]
-      }
+      "targets": { "node": "current" },
+      "useBuiltIns": "usage"
     }]
   ],
   "plugins": [
     "transform-async-generator-functions",
     "transform-class-properties",
-    "transform-object-rest-spread"
+    "transform-object-rest-spread",
+    ["transform-builtin-classes", {
+      "globals": ["Error"]
+    }]
   ]
 }

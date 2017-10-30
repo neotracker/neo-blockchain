@@ -11,10 +11,7 @@ export { default as StorageItem } from './StorageItem';
 export { default as Validator } from './Validator';
 export { default as Witness } from './Witness';
 
-export {
-  LogAction,
-  NotificationAction,
-} from './action';
+export { LogAction, NotificationAction } from './action';
 export { default as common } from './common';
 export {
   SignatureContractParameter,
@@ -34,7 +31,6 @@ export { InvalidFormatError } from './errors';
 export {
   InvocationResultSuccess,
   InvocationResultError,
-  InvocationResultType,
   deserializeWire as deserializeInvocationResultWire,
 } from './invocationResult';
 export {
@@ -65,7 +61,7 @@ export {
   ScriptBuilder,
 } from './utils';
 
-export type { AccountJSON,AccountKey, AccountUpdate } from './Account';
+export type { AccountJSON, AccountKey, AccountUpdate } from './Account';
 export type {
   Action,
   ActionJSON,
@@ -83,7 +79,12 @@ export type { BlockBaseAdd } from './BlockBase';
 export type { ContractJSON, ContractKey } from './Contract';
 export type { HeaderJSON, HeaderKey } from './Header';
 export type { InvocationDataKey } from './InvocationData';
-export type { StorageItemJSON, StorageItemKey, StorageItemsKey, StorageItemUpdate } from './StorageItem';
+export type {
+  StorageItemJSON,
+  StorageItemKey,
+  StorageItemsKey,
+  StorageItemUpdate,
+} from './StorageItem';
 export type {
   Attribute,
   OutputKey,
@@ -117,16 +118,9 @@ export {
   InvalidContractParameterTypeError,
   assertContractParameterType,
 } from './contractParameter';
-export {
-  createSerializeWire,
-} from './Serializable';
-export {
-  SCRIPT_CONTAINER_TYPE,
-} from './ScriptContainer';
-export {
-  BYTECODE_TO_OPCODE,
-  OPCODE_TO_BYTECODE,
-} from './vm';
+export { createSerializeWire } from './Serializable';
+export { SCRIPT_CONTAINER_TYPE } from './ScriptContainer';
+export { BYTECODE_TO_OPCODE, OPCODE_TO_BYTECODE } from './vm';
 
 export type {
   ECPoint,
@@ -159,6 +153,7 @@ export type { Equatable, Equals } from './Equatable';
 export type {
   InvocationResult,
   InvocationResultJSON,
+  InvocationResultType,
 } from './invocationResult';
 export type {
   DeserializeWireBaseOptions,
@@ -169,18 +164,10 @@ export type {
   SerializeWire,
   SerializableWire,
 } from './Serializable';
-export type {
-  Settings,
-  VMSettings,
-} from './Settings';
+export type { Settings, VMSettings } from './Settings';
 export type {
   ScriptContainer,
   ScriptContainerType,
   InvalidScriptContainerTypeError,
 } from './ScriptContainer';
-export type {
-  ByteCode,
-  OpCode,
-  SysCallName,
-  VerifyScriptOptions,
-} from './vm';
+export type { ByteCode, OpCode, SysCallName, VerifyScriptOptions } from './vm';
