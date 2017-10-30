@@ -77,10 +77,6 @@ export default class Blockchain {
   >;
   serializeJSONContext: $PropertyType<BlockchainType, 'serializeJSONContext'>;
 
-  currentBlock: $PropertyType<BlockchainType, 'currentBlock'>;
-  currentHeader: $PropertyType<BlockchainType, 'currentHeader'>;
-  currentBlockIndex: $PropertyType<BlockchainType, 'currentBlockIndex'>;
-
   account: $PropertyType<BlockchainType, 'account'>;
   action: $PropertyType<BlockchainType, 'action'>;
   asset: $PropertyType<BlockchainType, 'asset'>;

@@ -10,7 +10,7 @@
   "bugs": "https://github.com/neotracker/neo-blockchain/issues",
   "license": "MIT",
   "bin": {
-    "neo-blockchain": "./bin/neo-blockchain.js"
+    "neo-blockchain": "./lib/bin/neo-blockchain"
   },
   "dependencies": {
     "commander": "^2.11.0",

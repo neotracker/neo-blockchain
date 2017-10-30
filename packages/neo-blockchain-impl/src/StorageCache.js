@@ -72,7 +72,6 @@ type BaseReadStorageCacheOptions<Key, Value> = {|
 class BaseReadStorageCache<Key, Value> {
   _readStorage: ReadStorage<Key, Value>;
   _name: string;
-  +_tryGetTracked: (key: Key) => ?TrackedChange<Key, Value>;
   _createAddChange: (value: Value) => AddChange;
   _createDeleteChange: ?(key: Key) => DeleteChange;
   _values: { [key: string]: TrackedChange<Key, Value> };
@@ -111,6 +110,11 @@ class BaseReadStorageCache<Key, Value> {
 
       return { type: 'add', change: this._createAddChange(value.value) };
     });
+  }
+
+  // eslint-disable-next-line
+  _tryGetTracked(key: Key): ?TrackedChange<Key, Value> {
+    throw new Error('Not Implemented');
   }
 }
 

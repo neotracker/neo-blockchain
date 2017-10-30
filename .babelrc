@@ -1,20 +1,11 @@
 {
   "presets": [
     "flow",
-    ["env", {
-      "targets": { "node": true },
-      "exclude": [
-        "transform-regenerator"
-      ]
-    }]
+    ["env", { "targets": { "node": true } }]
   ],
   "plugins": [
-    "transform-runtime",
+    "transform-async-generator-functions",
     "transform-class-properties",
-    "transform-export-extensions",
-    "transform-object-rest-spread",
-    "transform-decorators-legacy",
-    "transform-async-to-generator",
-    "transform-async-generator-functions"
+    "transform-object-rest-spread"
   ]
 }

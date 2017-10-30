@@ -1,37 +1,42 @@
 /* @flow */
 /* eslint-disable */
-const plumber = require("gulp-plumber");
-const through = require("through2");
-const chalk = require("chalk");
-const newer = require("gulp-newer");
-const babel = require("gulp-babel");
-const watch = require("gulp-watch");
-const gutil = require("gulp-util");
-const gulp = require("gulp");
-const path = require("path");
-const merge = require("merge-stream");
-
-const sources = ["packages"];
+const plumber = require('gulp-plumber');
+const through = require('through2');
+const chalk = require('chalk');
+const newer = require('gulp-newer');
+const babel = require('gulp-babel');
+const watch = require('gulp-watch');
+const gutil = require('gulp-util');
+const gulp = require('gulp');
+const path = require('path');
+const merge = require('merge-stream');
 
 function swapSrcWithLib(srcPath) {
   const parts = srcPath.split(path.sep);
-  parts[1] = "lib";
+  parts[1] = 'lib';
   return parts.join(path.sep);
 }
 
-function getGlobFromSource(source) {
-  return `./${source}/*/src/**/*.js`;
-}
+const sources = [
+  ['packages', './packages/*/src/**/*.js', swapSrcWithLib],
+  [
+    'packages',
+    './packages/*/src/bin/**/*',
+    swapSrcWithLib,
+  ],
+].map(([source, glob, swap]) => [
+  path.join(__dirname, source),
+  glob,
+  swap,
+]);
 
-gulp.task("default", ["build"]);
+gulp.task('default', ['build']);
 
-gulp.task("build", function() {
+gulp.task('build', function() {
   return merge(
-    sources.map(source => {
-      const base = path.join(__dirname, source);
-
+    sources.map(([base, glob, swap]) => {
       return gulp
-        .src(getGlobFromSource(source), { base: base })
+        .src(glob, { base: base })
         .pipe(
           plumber({
             errorHandler: function(err) {
@@ -42,12 +47,12 @@ gulp.task("build", function() {
         .pipe(
           newer({
             dest: base,
-            map: swapSrcWithLib,
+            map: swap,
           })
         )
         .pipe(
           through.obj(function(file, enc, callback) {
-            gutil.log("Compiling", "'" + chalk.cyan(file.relative) + "'...");
+            gutil.log(`Compiling '${chalk.cyan(file.relative)}'...`);
             callback(null, file);
           })
         )
@@ -57,7 +62,7 @@ gulp.task("build", function() {
             // path and this keeps it consistent.
             file.path = path.resolve(
               file.base,
-              swapSrcWithLib(file.relative) + '.flow',
+              swap(file.relative) + '.flow',
             );
             callback(null, file);
           })
@@ -77,8 +82,8 @@ gulp.task("build", function() {
   );
 });
 
-gulp.task("watch", ["build"], function() {
-  watch(sources.map(getGlobFromSource), { debounceDelay: 200 }, function() {
-    gulp.start("build");
+gulp.task('watch', ['build'], function() {
+  watch(sources.map(source => source[1]), { debounceDelay: 200 }, function() {
+    gulp.start('build');
   });
 });

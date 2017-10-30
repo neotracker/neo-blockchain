@@ -1,11 +1,14 @@
-#! /usr/bin/env babel-node
+#! /usr/bin/env node
 /* @flow */
 import type { FullNode } from 'neo-blockchain-full-node';
 
 import program from 'commander';
 
-import { createFullNode, log, resolveHome, setupCLI } from '../src';
-import pkg from '../package.json';
+import createFullNode from '../createFullNode';
+import log from '../log';
+import resolveHome from '../resolveHome';
+import setupCLI from '../setupCLI';
+import pkg from '../../package.json';
 
 const { shutdownFuncs, shutdown } = setupCLI();
 

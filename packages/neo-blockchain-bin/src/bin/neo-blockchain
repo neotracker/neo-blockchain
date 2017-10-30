@@ -1,9 +1,9 @@
-#! /usr/bin/env babel-node
+#! /usr/bin/env node
 /* @flow */
 import program from 'commander';
 
-import { setupCLI } from '../src';
-import pkg from '../package.json';
+import setupCLI from '../setupCLI';
+import pkg from '../../package.json';
 
 setupCLI();
 
