@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-full-node",
-  "version": "0.0.38",
+  "version": "0.0.39",
   "keywords": [
     "neo",
     "blockchain"
@@ -15,14 +15,14 @@
     "babel-runtime": "^7.0.0-beta.3",
     "leveldown": "^2.0.0",
     "levelup": "^2.0.0-rc3",
-    "neo-blockchain-core": "^0.0.38",
-    "neo-blockchain-impl": "^0.0.38",
-    "neo-blockchain-levelup": "^0.0.38",
-    "neo-blockchain-node": "^0.0.38",
-    "neo-blockchain-node-core": "^0.0.38",
-    "neo-blockchain-offline": "^0.0.38",
-    "neo-blockchain-rpc": "^0.0.38",
-    "neo-blockchain-vm": "^0.0.38",
+    "neo-blockchain-core": "^0.0.39",
+    "neo-blockchain-impl": "^0.0.39",
+    "neo-blockchain-levelup": "^0.0.39",
+    "neo-blockchain-node": "^0.0.39",
+    "neo-blockchain-node-core": "^0.0.39",
+    "neo-blockchain-offline": "^0.0.39",
+    "neo-blockchain-rpc": "^0.0.39",
+    "neo-blockchain-vm": "^0.0.39",
     "rxjs": "^5.5.2"
   }
 }

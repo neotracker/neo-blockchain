@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-client",
-  "version": "0.0.38",
+  "version": "0.0.39",
   "keywords": [
     "neo",
     "blockchain"
@@ -19,6 +19,6 @@
     "isomorphic-fetch": "^2.2.1",
     "ix": "^2.1.4",
     "lodash": "^4.17.4",
-    "neo-blockchain-core": "^0.0.38"
+    "neo-blockchain-core": "^0.0.39"
   }
 }
