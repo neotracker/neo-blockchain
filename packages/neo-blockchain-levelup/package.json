@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-levelup",
-  "version": "0.0.37",
+  "version": "0.0.38",
   "keywords": [
     "neo",
     "blockchain"
@@ -12,8 +12,8 @@
   "main": "./lib/index.js",
   "dependencies": {
     "bytewise": "^1.1.0",
-    "neo-blockchain-core": "^0.0.37",
-    "neo-blockchain-node-core": "^0.0.37",
+    "neo-blockchain-core": "^0.0.38",
+    "neo-blockchain-node-core": "^0.0.38",
     "rxjs": "^5.4.3"
   }
 }
