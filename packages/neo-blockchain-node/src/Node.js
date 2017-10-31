@@ -425,6 +425,12 @@ export default class Node implements INode {
     return true;
   }
 
+  _ready(): boolean {
+    const peer = this._bestPeer;
+    const block = this._blockchain.currentBlock;
+    return peer != null && block.index >= peer.data.startHeight;
+  }
+
   _onRequestEndpoints = (): void => {
     this._relay(this._createMessage({ command: COMMAND.GET_ADDR }));
   };
@@ -836,7 +842,9 @@ export default class Node implements INode {
   }
 
   async _onTransactionReceived(transaction: Transaction): Promise<void> {
-    await this.relayTransaction(transaction);
+    if (this._ready()) {
+      await this.relayTransaction(transaction);
+    }
   }
 
   // eslint-disable-next-line
