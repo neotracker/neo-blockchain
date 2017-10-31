@@ -7,11 +7,11 @@ import type Client from './Client';
 import { UnknownBlockError } from './errors';
 
 type Item =
-  {| type: 'value', value: Block |} |
-  {| type: 'error', error: Error |};
+  | {| type: 'value', value: Block |}
+  | {| type: 'error', error: Error |};
 type Resolver = {|
-  resolve: (value: IteratorResult<Block, void>) => void;
-  reject: (reason: Error) => void;
+  resolve: (value: IteratorResult<Block, void>) => void,
+  reject: (reason: Error) => void,
 |};
 
 type AsyncBlockIteratorOptions = {|
@@ -19,14 +19,12 @@ type AsyncBlockIteratorOptions = {|
   filter: BlockFilter,
 |};
 
-
 const FETCH_ONE_POLL_MS = 5000;
 const QUEUE_SIZE = 1000;
 const BATCH_SIZE = 50;
 
 // $FlowFixMe
-export default class AsyncBlockIterator
-  implements AsyncIterator<Block> {
+export default class AsyncBlockIterator implements AsyncIterator<Block> {
   _client: Client;
   _items: Array<Item>;
   _resolvers: Array<Resolver>;
@@ -36,10 +34,7 @@ export default class AsyncBlockIterator
   _startHeight: ?number;
   _indexStop: ?number;
 
-  constructor({
-    client,
-    filter,
-  }: AsyncBlockIteratorOptions) {
+  constructor({ client, filter }: AsyncBlockIteratorOptions) {
     this._client = client;
     this._items = [];
     this._resolvers = [];
@@ -95,7 +90,7 @@ export default class AsyncBlockIterator
       if (item.type === 'error') {
         reject(item.error);
       } else {
-        resolve({ done: false, value: item.value })
+        resolve({ done: false, value: item.value });
       }
     } else {
       this._items.push(item);
@@ -117,10 +112,10 @@ export default class AsyncBlockIterator
       .then(() => {
         this._fetching = false;
       })
-      .catch((error) => {
+      .catch(error => {
         this._fetching = false;
         this._error(error);
-      })
+      });
   }
 
   async _asyncFetch(): Promise<void> {
@@ -132,7 +127,7 @@ export default class AsyncBlockIterator
     }
 
     const index = this._currentIndex;
-    if (this._indexStop != null && index >= this._indexStop) {
+    if (this._indexStop != null && index > this._indexStop) {
       this._done();
     } else if (index >= startHeight) {
       const [block, newStartHeight] = await Promise.all([
@@ -149,13 +144,13 @@ export default class AsyncBlockIterator
         startHeight - index,
       );
       if (this._indexStop != null) {
-        toFetch = Math.min(toFetch, this._indexStop - index);
+        toFetch = Math.min(toFetch, this._indexStop - index + 1);
       }
       for (const chunk of _.chunk(_.range(0, toFetch), BATCH_SIZE)) {
         // eslint-disable-next-line
-        const blocks = await Promise.all(chunk.map(
-          offset => this._fetchOne(index + offset),
-        ));
+        const blocks = await Promise.all(
+          chunk.map(offset => this._fetchOne(index + offset)),
+        );
         this._currentIndex += chunk.length;
         blocks.forEach(block => this._write(block));
       }
@@ -167,10 +162,7 @@ export default class AsyncBlockIterator
       const block = await this._client.getBlock(index);
       return block;
     } catch (error) {
-      if (
-        error instanceof UnknownBlockError ||
-        error.unknownBlock
-      ) {
+      if (error instanceof UnknownBlockError || error.unknownBlock) {
         return new Promise((resolve, reject) => {
           setTimeout(
             () => this._fetchOne(index).then(resolve, reject),

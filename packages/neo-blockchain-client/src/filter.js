@@ -1,9 +1,6 @@
 /* @flow */
 import type { Hash160Like } from './types';
 
-// TODO: ActionFilter and GetActions filter blockIndexStop mean different things
-// GetActions -> inclusive
-// Actions -> exclusive because BlockFilter indexStop is exclusive.
 export type ActionFilter = {|
   blockIndexStart?: number,
   transactionIndexStart?: number,
