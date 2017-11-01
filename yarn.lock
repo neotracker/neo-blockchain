@@ -784,7 +784,7 @@ babel-plugin-transform-exponentiation-operator@7.0.0-beta.3:
     babel-helper-builder-binary-assignment-operator-visitor "7.0.0-beta.3"
     babel-plugin-syntax-exponentiation-operator "7.0.0-beta.0"
 
-babel-plugin-transform-flow-strip-types@7.0.0-beta.3:
+babel-plugin-transform-flow-strip-types@^7.0.0-beta.3:
   version "7.0.0-beta.3"
   resolved "https://registry.npmjs.org/babel-plugin-transform-flow-strip-types/-/babel-plugin-transform-flow-strip-types-7.0.0-beta.3.tgz#40d7c030895dc9811e7dd09997ee96df6054eed6"
   dependencies:
@@ -874,12 +874,6 @@ babel-preset-env@^7.0.0-beta.3:
     browserslist "^2.4.0"
     invariant "^2.2.2"
     semver "^5.3.0"
-
-babel-preset-flow@^7.0.0-beta.3:
-  version "7.0.0-beta.3"
-  resolved "https://registry.npmjs.org/babel-preset-flow/-/babel-preset-flow-7.0.0-beta.3.tgz#011d8b86825849b83bf1d2b47ec277c15eabfd97"
-  dependencies:
-    babel-plugin-transform-flow-strip-types "7.0.0-beta.3"
 
 babel-register@7.0.0-beta.3:
   version "7.0.0-beta.3"

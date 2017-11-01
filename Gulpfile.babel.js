@@ -78,7 +78,6 @@ const getBabelConfig = ({
 |}) => ({
   babelrc: false,
   presets: [
-    'flow',
     ['env', {
       useBuiltIns: 'usage',
       modules,
@@ -86,6 +85,7 @@ const getBabelConfig = ({
   ],
   plugins: [
     'transform-async-generator-functions',
+    'transform-flow-strip-types',
     'transform-class-properties',
     'transform-object-rest-spread',
     ['transform-builtin-classes', {
