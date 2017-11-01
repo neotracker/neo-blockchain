@@ -1,12 +1,10 @@
 /* @fl/* @flow */
 import type BN from 'bn.js';
-import { Transform } from 'stream';
 
 import type Asset, { AssetKey } from './Asset';
 import BlockBase, { type BlockBaseJSON } from './BlockBase';
 import {
   type DeserializeWireBaseOptions,
-  type DeserializeWireContext,
   type DeserializeWireOptions,
   type SerializableJSON,
   type SerializableWire,
@@ -96,9 +94,11 @@ export default class Block extends BlockBase
     super({
       version,
       previousHash,
-      merkleRoot: merkleRoot || MerkleTree.computeRoot(
-        transactions.map(transaction => transaction.hash),
-      ),
+      merkleRoot:
+        merkleRoot ||
+        MerkleTree.computeRoot(
+          transactions.map(transaction => transaction.hash),
+        ),
       timestamp,
       index,
       consensusData,
@@ -107,35 +107,42 @@ export default class Block extends BlockBase
       hash,
     });
     this.transactions = transactions;
-    this.__blockSize = utils.lazy(() => (
-      super.size +
-      IOHelper.sizeOfArray(this.transactions, transaction => transaction.size)
-    ));
+    this.__blockSize = utils.lazy(
+      () =>
+        super.size +
+        IOHelper.sizeOfArray(
+          this.transactions,
+          transaction => transaction.size,
+        ),
+    );
   }
 
   get size(): number {
     return this.__blockSize();
   }
 
-  _header = utils.lazy(() => new Header({
-    version: this.version,
-    previousHash: this.previousHash,
-    merkleRoot: this.merkleRoot,
-    timestamp: this.timestamp,
-    index: this.index,
-    consensusData: this.consensusData,
-    nextConsensus: this.nextConsensus,
-    script: this.script,
-  }));
+  _header = utils.lazy(
+    () =>
+      new Header({
+        version: this.version,
+        previousHash: this.previousHash,
+        merkleRoot: this.merkleRoot,
+        timestamp: this.timestamp,
+        index: this.index,
+        consensusData: this.consensusData,
+        nextConsensus: this.nextConsensus,
+        script: this.script,
+      }),
+  );
 
   get header(): Header {
     return this._header();
   }
 
   async getNetworkFee(context: FeeContext): Promise<BN> {
-    const fees = await Promise.all(this.transactions.map(
-      transaction => transaction.getNetworkFee(context),
-    ));
+    const fees = await Promise.all(
+      this.transactions.map(transaction => transaction.getNetworkFee(context)),
+    );
     return fees.reduce((acc, fee) => acc.add(fee), utils.ZERO);
   }
 
@@ -152,18 +159,17 @@ export default class Block extends BlockBase
     if (
       this.transactions.length === 0 ||
       this.transactions[0].type !== TRANSACTION_TYPE.MINER ||
-      this.transactions.slice(1).some(
-        transaction => transaction.type === TRANSACTION_TYPE.MINER,
-      )
+      this.transactions
+        .slice(1)
+        .some(transaction => transaction.type === TRANSACTION_TYPE.MINER)
     ) {
       throw new VerifyError('Invalid miner transaction in block.');
     }
 
-
     await Promise.all([
       this._verifyBase(options),
       completely ? this._verifyComplete(options) : Promise.resolve(),
-    ])
+    ]);
   }
 
   async _verifyBase({
@@ -211,32 +217,34 @@ export default class Block extends BlockBase
     ]);
   }
 
-  async _verifyConsensus({
-    getValidators,
-  }: BlockVerifyOptions): Promise<void> {
+  async _verifyConsensus({ getValidators }: BlockVerifyOptions): Promise<void> {
     const validators = await getValidators(this.transactions);
-    if (!common.uInt160Equal(
-      this.nextConsensus,
-      crypto.getConsensusAddress(validators)
-    )) {
+    if (
+      !common.uInt160Equal(
+        this.nextConsensus,
+        crypto.getConsensusAddress(validators),
+      )
+    ) {
       throw new VerifyError('Invalid next consensus address');
     }
   }
 
   async _verifyTransactions(options: BlockVerifyOptions): Promise<void> {
-    await Promise.all(this.transactions.map(
-      transaction => transaction.verify({
-        isSpent: options.isSpent,
-        getAsset: options.getAsset,
-        getOutput: options.getOutput,
-        calculateClaimAmount: options.calculateClaimAmount,
-        verifyScript: options.verifyScript,
-        currentHeight: options.currentHeight,
-        governingToken: options.governingToken,
-        utilityToken: options.utilityToken,
-        fees: options.fees,
-      }),
-    ));
+    await Promise.all(
+      this.transactions.map(transaction =>
+        transaction.verify({
+          isSpent: options.isSpent,
+          getAsset: options.getAsset,
+          getOutput: options.getOutput,
+          calculateClaimAmount: options.calculateClaimAmount,
+          verifyScript: options.verifyScript,
+          currentHeight: options.currentHeight,
+          governingToken: options.governingToken,
+          utilityToken: options.utilityToken,
+          fees: options.fees,
+        }),
+      ),
+    );
   }
 
   async _verifyNetworkFee(options: BlockVerifyOptions): Promise<void> {
@@ -247,7 +255,7 @@ export default class Block extends BlockBase
       fees: options.fees,
     });
     const minerTransaction = this.transactions.find(
-      transaction => transaction.type === TRANSACTION_TYPE.MINER
+      transaction => transaction.type === TRANSACTION_TYPE.MINER,
     );
     if (minerTransaction == null) {
       throw new VerifyError('Missing miner transaction');
@@ -265,9 +273,8 @@ export default class Block extends BlockBase
 
   serializeWireBase(writer: BinaryWriter): void {
     super.serializeWireBase(writer);
-    writer.writeArray(
-      this.transactions,
-      (transaction) => transaction.serializeWireBase(writer),
+    writer.writeArray(this.transactions, transaction =>
+      transaction.serializeWireBase(writer),
     );
   }
 
@@ -310,9 +317,7 @@ export default class Block extends BlockBase
   }
 
   // eslint-disable-next-line
-  async serializeJSON(
-    context: SerializeJSONContext,
-  ): Promise<BlockJSON> {
+  async serializeJSON(context: SerializeJSONContext): Promise<BlockJSON> {
     const blockBaseJSON = super.serializeBlockBaseJSON(context);
 
     return {
@@ -325,78 +330,13 @@ export default class Block extends BlockBase
       nonce: blockBaseJSON.nonce,
       nextconsensus: blockBaseJSON.nextconsensus,
       script: blockBaseJSON.script,
-      tx: await Promise.all(this.transactions.map(
-        transaction => (transaction.serializeJSON(context): $FlowFixMe),
-      )),
+      tx: await Promise.all(
+        this.transactions.map(
+          transaction => (transaction.serializeJSON(context): $FlowFixMe),
+        ),
+      ),
       size: blockBaseJSON.size,
       confirmations: blockBaseJSON.confirmations,
-    }
-  }
-}
-
-
-export class InvalidBlockTransformEncodingError extends Error {
-  constructor() {
-    super('Invalid Block Transform Encoding.');
-  }
-}
-
-const SIZE_OF_INT32 = 4;
-
-export class BlockTransform extends Transform {
-  context: DeserializeWireContext;
-  buffer: Buffer;
-
-  constructor(context: DeserializeWireContext) {
-    super({ readableObjectMode: true });
-    this.context = context;
-    this.buffer = Buffer.from([]);
-  }
-
-  _transform(
-    chunk: Buffer | string,
-    encoding: string,
-    callback: (error: ?Error, data?: Buffer | string) => void
-  ): void {
-    if (typeof chunk === 'string' || encoding !== 'buffer') {
-      throw new InvalidBlockTransformEncodingError();
-    }
-
-    this.buffer = Buffer.concat([this.buffer, chunk]);
-    try {
-      const { remainingBuffer, blocks } = this._processBuffer(
-        new BinaryReader(this.buffer),
-      );
-      this.buffer = remainingBuffer;
-      blocks.reverse().forEach(block => this.push((block: $FlowFixMe)));
-      callback(null);
-    } catch (error) {
-      callback(error);
-    }
-  }
-
-  _processBuffer(reader: BinaryReader): {|
-    remainingBuffer: Buffer,
-    blocks: Array<Block>,
-  |} {
-    if (reader.remaining < SIZE_OF_INT32) {
-      return { remainingBuffer: reader.remainingBuffer, blocks: [] };
-    }
-
-    const length = reader.clone().readInt32LE();
-
-    // TODO: Not sure why this doesn't work properly with just length...
-    if (reader.remaining + SIZE_OF_INT32 < length * 2) {
-      return { remainingBuffer: reader.remainingBuffer, blocks: [] };
-    }
-
-    reader.readInt32LE();
-    const block = Block.deserializeWireBase({
-      context: this.context,
-      reader,
-    });
-    const { remainingBuffer, blocks } = this._processBuffer(reader);
-    blocks.push(block);
-    return { remainingBuffer, blocks };
+    };
   }
 }

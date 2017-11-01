@@ -7,7 +7,6 @@ import utils from './utils';
 import weightedAverage from './weightedAverage';
 import weightedFilter from './weightedFilter';
 
-export { default as async } from './async';
 export { default as BinaryReader } from './BinaryReader';
 export { default as BinaryWriter } from './BinaryWriter';
 export { default as IOHelper } from './IOHelper';

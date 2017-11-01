@@ -15,7 +15,6 @@
   "main": "./dist/index.js",
   "module": "./dist/es.js",
   "dependencies": {
-    "babel-runtime": "^7.0.0-beta.3",
     "commander": "^2.11.0",
     "lodash": "^4.17.4",
     "neo-blockchain-client": "^0.0.42",

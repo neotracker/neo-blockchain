@@ -79,7 +79,7 @@ const getBabelConfig = ({
   babelrc: false,
   presets: [
     ['env', {
-      useBuiltIns: 'usage',
+      useBuiltIns: false,
       modules,
     }]
   ],
@@ -91,7 +91,6 @@ const getBabelConfig = ({
     ['transform-builtin-classes', {
       'globals': ['Error']
     }],
-    'transform-runtime',
   ],
 });
 
@@ -122,7 +121,6 @@ const createRollupInput = ({
       json({ preferConst: true }),
       babel({
         exclude: 'node_modules/**',
-        runtimeHelpers: true,
         ...getBabelConfig({ modules: false }),
       }),
       sourcemaps(),

@@ -49,7 +49,6 @@ import utils, {
   type BinaryWriter,
   IOHelper,
   JSONHelper,
-  async,
 } from '../utils';
 
 const getUtilityValue = ({
@@ -58,12 +57,10 @@ const getUtilityValue = ({
 }: {|
   outputs: Array<Output>,
   utilityToken: RegisterTransaction,
-|}) => outputs.filter(
-  output => common.uInt256Equal(output.asset, utilityToken.hash)
-).reduce(
-  (acc, output) => acc.add(output.value),
-  utils.ZERO,
-);
+|}) =>
+  outputs
+    .filter(output => common.uInt256Equal(output.asset, utilityToken.hash))
+    .reduce((acc, output) => acc.add(output.value), utils.ZERO);
 
 export type FeeContext = {|
   getOutput: (input: Input) => Promise<Output>,
@@ -100,15 +97,15 @@ export type TransactionVerifyOptions = {|
 |};
 export type TransactionBaseAdd = {|
   version?: number,
-  attributes?: Array<Attribute>;
-  inputs?: Array<Input>;
-  outputs?: Array<Output>;
-  scripts?: Array<Witness>;
+  attributes?: Array<Attribute>,
+  inputs?: Array<Input>,
+  outputs?: Array<Output>,
+  scripts?: Array<Witness>,
   hash?: UInt256,
 |};
 export type TransactionBaseAddWithType<Type: TransactionType> = {|
   ...TransactionBaseAdd,
-  type: Type;
+  type: Type,
 |};
 
 export type TransactionBaseJSON = {|
@@ -126,7 +123,9 @@ export type TransactionBaseJSON = {|
 export const MAX_TRANSACTION_ATTRIBUTES = 16;
 
 export default class TransactionBase<Type: TransactionType, TransactionJSON>
-  implements Equatable, SerializableWire<Transaction>, SerializableJSON<TransactionJSON> {
+  implements Equatable,
+    SerializableWire<Transaction>,
+    SerializableJSON<TransactionJSON> {
   static VERSION = 0;
 
   type: Type;
@@ -155,9 +154,10 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
     this.outputs = outputs || [];
     this.scripts = scripts || [];
     const hashIn = hash;
-    this._hash = hashIn == null
-      ? utils.lazy(() => crypto.hash256(this.message))
-      : () => hashIn;
+    this._hash =
+      hashIn == null
+        ? utils.lazy(() => crypto.hash256(this.message))
+        : () => hashIn;
 
     if (this.attributes.length > MAX_TRANSACTION_ATTRIBUTES) {
       throw new InvalidFormatError();
@@ -165,17 +165,18 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
   }
 
   _hashHex = utils.lazy(() => common.uInt256ToHex(this.hash));
-  _size = utils.lazy(() => (
-    IOHelper.sizeOfUInt8 +
-    IOHelper.sizeOfArray(this.attributes, attribute => attribute.size) +
-    IOHelper.sizeOfArray(this.inputs, input => input.size) +
-    IOHelper.sizeOfArray(this.outputs, output => output.size) +
-    IOHelper.sizeOfArray(this.scripts, script => script.size)
-  ));
+  _size = utils.lazy(
+    () =>
+      IOHelper.sizeOfUInt8 +
+      IOHelper.sizeOfArray(this.attributes, attribute => attribute.size) +
+      IOHelper.sizeOfArray(this.inputs, input => input.size) +
+      IOHelper.sizeOfArray(this.outputs, output => output.size) +
+      IOHelper.sizeOfArray(this.scripts, script => script.size),
+  );
   _message = utils.lazy(() => this.serializeUnsigned());
 
   get hash(): UInt256 {
-    return this._hash()
+    return this._hash();
   }
 
   get hashHex(): UInt256Hex {
@@ -196,55 +197,58 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
   }
 
   sign(key: PrivateKey): this {
-    return this.clone(this.scripts.concat([crypto.createWitness(
-      this.serializeUnsigned(),
-      key,
-    )]));
+    return this.clone(
+      this.scripts.concat([
+        crypto.createWitness(this.serializeUnsigned(), key),
+      ]),
+    );
   }
 
-  equals: Equals = utils.equals(
-    this.constructor,
-    (other) => common.uInt256Equal(this.hash, other.hash),
+  equals: Equals = utils.equals(this.constructor, other =>
+    common.uInt256Equal(this.hash, other.hash),
   );
 
   // eslint-disable-next-line
-  serializeExclusiveBase(writer: BinaryWriter): void {
-  }
+  serializeExclusiveBase(writer: BinaryWriter): void {}
 
   serializeUnsignedBase(writer: BinaryWriter): void {
     writer.writeUInt8(this.type);
     writer.writeUInt8(this.version);
     this.serializeExclusiveBase(writer);
-    writer.writeArray(this.attributes, (attribute) => {
+    writer.writeArray(this.attributes, attribute => {
       attribute.serializeWireBase(writer);
     });
-    writer.writeArray(this.inputs, (input) => {
+    writer.writeArray(this.inputs, input => {
       input.serializeWireBase(writer);
-    })
-    writer.writeArray(this.outputs, (output) => {
+    });
+    writer.writeArray(this.outputs, output => {
       output.serializeWireBase(writer);
     });
   }
 
   serializeWireBase(writer: BinaryWriter): void {
     this.serializeUnsignedBase(writer);
-    writer.writeArray(this.scripts, (script) => {
+    writer.writeArray(this.scripts, script => {
       script.serializeWireBase(writer);
     });
   }
 
-  serializeWire: SerializeWire = createSerializeWire(this.serializeWireBase.bind(this));
+  serializeWire: SerializeWire = createSerializeWire(
+    this.serializeWireBase.bind(this),
+  );
 
-  serializeUnsigned: SerializeWire = createSerializeWire(this.serializeUnsignedBase.bind(this));
+  serializeUnsigned: SerializeWire = createSerializeWire(
+    this.serializeUnsignedBase.bind(this),
+  );
 
-  static deserializeTransactionBaseStartWireBase(
-    { reader }: DeserializeWireBaseOptions,
-  ): {| type: TransactionType, version: number |} {
+  static deserializeTransactionBaseStartWireBase({
+    reader,
+  }: DeserializeWireBaseOptions): {| type: TransactionType, version: number |} {
     const type = assertTransactionType(reader.readUInt8());
     const version = reader.readUInt8();
 
     return { type, version };
-  };
+  }
 
   static deserializeTransactionBaseEndWireBase(
     options: DeserializeWireBaseOptions,
@@ -259,19 +263,17 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
       () => deserializeAttributeWireBase(options),
       MAX_TRANSACTION_ATTRIBUTES,
     );
-    const inputs = reader.readArray(
-      () => Input.deserializeWireBase(options),
-    );
+    const inputs = reader.readArray(() => Input.deserializeWireBase(options));
     const outputs = reader.readArray(
       () => Output.deserializeWireBase(options),
       utils.USHORT_MAX_NUMBER + 1,
     );
-    const scripts = reader.readArray(
-      () => Witness.deserializeWireBase(options),
+    const scripts = reader.readArray(() =>
+      Witness.deserializeWireBase(options),
     );
 
     return { attributes, inputs, outputs, scripts };
-  };
+  }
 
   // eslint-disable-next-line
   static deserializeWireBase(options: DeserializeWireBaseOptions): this {
@@ -293,12 +295,12 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
       txid: common.uInt256ToString(this.hashHex),
       size: this.size,
       version: this.version,
-      attributes: this.attributes.map(
-        attribute => attribute.serializeJSON(context),
+      attributes: this.attributes.map(attribute =>
+        attribute.serializeJSON(context),
       ),
       vin: this.inputs.map(input => input.serializeJSON(context)),
-      vout: this.outputs.map(
-        (output, index) => output.serializeJSON(context, index),
+      vout: this.outputs.map((output, index) =>
+        output.serializeJSON(context, index),
       ),
       scripts: this.scripts.map(script => script.serializeJSON(context)),
       sys_fee: JSONHelper.writeFixed8(this.getSystemFee(context.feeContext)),
@@ -314,14 +316,17 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
   _networkFee = utils.lazyAsync(async (context: FeeContext): Promise<BN> => {
     const { getOutput, utilityToken } = context;
 
-    const outputsForInputs = await Promise.all(this.inputs.map(
-      input => getOutput(input),
-    ));
+    const outputsForInputs = await Promise.all(
+      this.inputs.map(input => getOutput(input)),
+    );
     const inputValue = getUtilityValue({
       outputs: outputsForInputs,
       utilityToken,
     });
-    const outputValue = getUtilityValue({ outputs: this.outputs, utilityToken })
+    const outputValue = getUtilityValue({
+      outputs: this.outputs,
+      utilityToken,
+    });
     return inputValue.sub(outputValue).sub(this.getSystemFee(context));
   });
 
@@ -331,40 +336,41 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
 
   getSystemFee({ fees }: FeeContext): BN {
     return fees[this.type] || utils.ZERO;
-  };
+  }
 
-  __getReferences = utils.lazyAsync(async ({
-    getOutput,
-  }: GetReferencesOptions) => Promise.all(this.inputs.map(
-    input => getOutput(input),
-  )));
+  __getReferences = utils.lazyAsync(
+    async ({ getOutput }: GetReferencesOptions) =>
+      Promise.all(this.inputs.map(input => getOutput(input))),
+  );
 
   getReferences(options: GetReferencesOptions): Promise<Array<Output>> {
     return this.__getReferences(options);
   }
 
-  __getTransactionResults = utils.lazyAsync(async ({
-    getOutput,
-  }: GetTransactionResultsOptions): Promise<{ [asset: UInt256Hex]: BN }> => {
-    const inputOutputs = await this.getReferences({ getOutput });
-    const results = ({}: { [asset: UInt256Hex]: BN });
-    const addOutputs = (outputs: Array<Output>, negative?: boolean) => {
-      for (const output of outputs) {
-        const key = common.uInt256ToHex(output.asset);
-        if (results[key] == null) {
-          results[key] = utils.ZERO;
+  __getTransactionResults = utils.lazyAsync(
+    async ({
+      getOutput,
+    }: GetTransactionResultsOptions): Promise<{ [asset: UInt256Hex]: BN }> => {
+      const inputOutputs = await this.getReferences({ getOutput });
+      const results = ({}: { [asset: UInt256Hex]: BN });
+      const addOutputs = (outputs: Array<Output>, negative?: boolean) => {
+        for (const output of outputs) {
+          const key = common.uInt256ToHex(output.asset);
+          if (results[key] == null) {
+            results[key] = utils.ZERO;
+          }
+
+          results[key] = results[key].add(
+            negative ? output.value.neg() : output.value,
+          );
         }
+      };
+      addOutputs(inputOutputs);
+      addOutputs(this.outputs, true);
 
-        results[key] = results[key].add(
-          negative ? output.value.neg() : output.value,
-        );
-      }
-    }
-    addOutputs(inputOutputs);
-    addOutputs(this.outputs, true);
-
-    return _.pickBy(results, (value) => !value.eq(utils.ZERO));
-  });
+      return _.pickBy(results, value => !value.eq(utils.ZERO));
+    },
+  );
 
   getTransactionResults(
     options: GetTransactionResultsOptions,
@@ -372,34 +378,42 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
     return this.__getTransactionResults(options);
   }
 
-  __baseGetScriptHashesForVerifying = utils.lazyAsync(async ({
-    getOutput,
-    getAsset,
-  }: TransactionGetScriptHashesForVerifyingOptions) => {
-    const [inputHashes, outputHashes] = await Promise.all([
-      Promise.all(this.inputs.map(async input => {
-        const output = await getOutput(input);
-        return common.uInt160ToHex(output.address);
-      })),
-      Promise.all(this.outputs.map(async output => {
-        const asset = await getAsset({ hash: output.asset });
-        if (hasFlag(asset.type, ASSET_TYPE.DUTY_FLAG)) {
-          return common.uInt160ToHex(output.address);
-        }
+  __baseGetScriptHashesForVerifying = utils.lazyAsync(
+    async ({
+      getOutput,
+      getAsset,
+    }: TransactionGetScriptHashesForVerifyingOptions) => {
+      const [inputHashes, outputHashes] = await Promise.all([
+        Promise.all(
+          this.inputs.map(async input => {
+            const output = await getOutput(input);
+            return common.uInt160ToHex(output.address);
+          }),
+        ),
+        Promise.all(
+          this.outputs.map(async output => {
+            const asset = await getAsset({ hash: output.asset });
+            if (hasFlag(asset.type, ASSET_TYPE.DUTY_FLAG)) {
+              return common.uInt160ToHex(output.address);
+            }
 
-        return null;
-      })).then(hashes => hashes.filter(Boolean)),
-    ]);
-    const attributeHashes = this.attributes
-      .map(attribute =>
-        attribute instanceof UInt160Attribute &&
-        attribute.usage === ATTRIBUTE_USAGE.SCRIPT
-          ? common.uInt160ToHex(attribute.value)
-          : null
-      ).filter(Boolean);
+            return null;
+          }),
+        ).then(hashes => hashes.filter(Boolean)),
+      ]);
+      const attributeHashes = this.attributes
+        .map(
+          attribute =>
+            attribute instanceof UInt160Attribute &&
+            attribute.usage === ATTRIBUTE_USAGE.SCRIPT
+              ? common.uInt160ToHex(attribute.value)
+              : null,
+        )
+        .filter(Boolean);
 
-    return new Set([...inputHashes, ...outputHashes, ...attributeHashes]);
-  });
+      return new Set([...inputHashes, ...outputHashes, ...attributeHashes]);
+    },
+  );
 
   async getScriptHashesForVerifying(
     options: TransactionGetScriptHashesForVerifyingOptions,
@@ -413,20 +427,25 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
       throw new VerifyError('Duplicate inputs');
     }
 
-    if (memPool.some(tx =>
-      !tx.equals(this) &&
-      tx.inputs.some(
-        input => this.inputs.some(thisInput => input.equals(thisInput)),
+    if (
+      memPool.some(
+        tx =>
+          !tx.equals(this) &&
+          tx.inputs.some(input =>
+            this.inputs.some(thisInput => input.equals(thisInput)),
+          ),
       )
-    )) {
+    ) {
       throw new VerifyError('Input already exists in mempool');
     }
 
-    if (this.attributes.filter(
-      attribute =>
-        attribute.usage === ATTRIBUTE_USAGE.ECDH02 ||
-        attribute.usage === ATTRIBUTE_USAGE.ECDH03
-    ).length > 1) {
+    if (
+      this.attributes.filter(
+        attribute =>
+          attribute.usage === ATTRIBUTE_USAGE.ECDH02 ||
+          attribute.usage === ATTRIBUTE_USAGE.ECDH03,
+      ).length > 1
+    ) {
       throw new VerifyError('Too many ECDH attributes.');
     }
 
@@ -441,11 +460,10 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
   async _verifyDoubleSpend({
     isSpent,
   }: TransactionVerifyOptions): Promise<void> {
-    const isDoubleSpend = await async.some(
-      this.inputs,
-      input => isSpent(input),
+    const isDoubleSpend = await Promise.all(
+      this.inputs.map(input => isSpent(input)),
     );
-    if (isDoubleSpend) {
+    if (isDoubleSpend.some(value => value)) {
       throw new VerifyError('Transaction is a double spend');
     }
   }
@@ -454,13 +472,11 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
     getAsset,
     currentHeight,
   }: TransactionVerifyOptions): Promise<void> {
-    const outputsGrouped = utils.entries(_.groupBy(
-      this.outputs,
-      output => common.uInt256ToHex(output.asset),
-    ));
-    const hasInvalidOutput = await async.some(
-      outputsGrouped,
-      async ([assetHex, outputs]) => {
+    const outputsGrouped = utils.entries(
+      _.groupBy(this.outputs, output => common.uInt256ToHex(output.asset)),
+    );
+    const hasInvalidOutputs = await Promise.all(
+      outputsGrouped.map(async ([assetHex, outputs]) => {
         const asset = await getAsset({ hash: common.hexToUInt256(assetHex) });
         if (
           asset.expiration <= currentHeight + 1 &&
@@ -471,13 +487,14 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
         }
 
         return outputs.some(
-          output => !output.value
-            .mod(utils.TEN.pow(utils.EIGHT.subn(asset.precision)))
-            .eq(utils.ZERO),
+          output =>
+            !output.value
+              .mod(utils.TEN.pow(utils.EIGHT.subn(asset.precision)))
+              .eq(utils.ZERO),
         );
-      },
+      }),
     );
-    if (hasInvalidOutput) {
+    if (hasInvalidOutputs.some(value => value)) {
       throw new VerifyError('Transaction has invalid output');
     }
   }
@@ -494,13 +511,12 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
       ([_, value]) => value.gt(utils.ZERO),
     );
     if (
-      resultsDestroy.length > 1 || (
-        resultsDestroy.length === 1 &&
+      resultsDestroy.length > 1 ||
+      (resultsDestroy.length === 1 &&
         !common.uInt256Equal(
           common.hexToUInt256(resultsDestroy[0][0]),
-          utilityToken.hash
-        )
-      )
+          utilityToken.hash,
+        ))
     ) {
       throw new VerifyError('Invalid destroyed output.');
     }
@@ -513,10 +529,8 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
     };
     const systemFee = this.getSystemFee(feeContext);
     if (
-      systemFee.gt(utils.ZERO) && (
-        resultsDestroy.length === 0 ||
-        resultsDestroy[0][1].lt(systemFee)
-      )
+      systemFee.gt(utils.ZERO) &&
+      (resultsDestroy.length === 0 || resultsDestroy[0][1].lt(systemFee))
     ) {
       throw new VerifyError('Not enough output value for system fee.');
     }
@@ -530,23 +544,30 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
       case TRANSACTION_TYPE.MINER:
       case TRANSACTION_TYPE.CLAIM:
         // eslint-disable-next-line
-        if (resultsIssue.some(([assetHex, _]) =>
-          !common.uInt256Equal(
-            common.hexToUInt256(assetHex),
-            utilityToken.hash,
+        if (
+          resultsIssue.some(
+            // eslint-disable-next-line
+            ([assetHex, _]) =>
+              !common.uInt256Equal(
+                common.hexToUInt256(assetHex),
+                utilityToken.hash,
+              ),
           )
-        )) {
+        ) {
           throw new VerifyError('Invalid miner/claim result');
         }
         break;
       case TRANSACTION_TYPE.ISSUE:
         // eslint-disable-next-line
-        if (resultsIssue.some(([assetHex, _]) =>
-          common.uInt256Equal(
-            common.hexToUInt256(assetHex),
-            utilityToken.hash,
+        if (
+          // eslint-disable-next-line
+          resultsIssue.some(([assetHex, _]) =>
+            common.uInt256Equal(
+              common.hexToUInt256(assetHex),
+              utilityToken.hash,
+            ),
           )
-        )) {
+        ) {
           throw new VerifyError('Invalid issue result');
         }
         break;
@@ -572,18 +593,20 @@ export default class TransactionBase<Type: TransactionType, TransactionJSON>
       throw new VerifyError('Invalid witnesses');
     }
 
-    const hashes = [...hashesSet].sort().map(
-      value => common.hexToUInt160(value),
+    const hashes = [...hashesSet]
+      .sort()
+      .map(value => common.hexToUInt160(value));
+    await Promise.all(
+      _.zip(hashes, this.scripts).map(([hash, witness]) =>
+        verifyScript({
+          scriptContainer: {
+            type: SCRIPT_CONTAINER_TYPE.TRANSACTION,
+            value: (this: $FlowFixMe),
+          },
+          hash,
+          witness,
+        }),
+      ),
     );
-    await Promise.all(_.zip(hashes, this.scripts).map(
-      ([hash, witness]) => verifyScript({
-        scriptContainer: {
-          type: SCRIPT_CONTAINER_TYPE.TRANSACTION,
-          value: (this: $FlowFixMe),
-        },
-        hash,
-        witness,
-      }),
-    ));
   }
 }

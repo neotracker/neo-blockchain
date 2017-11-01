@@ -2,7 +2,7 @@
 export { default as Account } from './Account';
 export { default as Asset } from './Asset';
 export { default as BaseState } from './BaseState';
-export { default as Block, BlockTransform } from './Block';
+export { default as Block } from './Block';
 export { default as BlockBase } from './BlockBase';
 export { default as Contract } from './Contract';
 export { default as Header } from './Header';
