@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-network",
-  "version": "0.0.42",
+  "version": "0.0.43",
   "keywords": [
     "neo",
     "blockchain"
@@ -12,8 +12,8 @@
   "main": "./dist/index.js",
   "dependencies": {
     "lodash": "^4.17.4",
-    "neo-blockchain-core": "^0.0.42",
-    "neo-blockchain-node-core": "^0.0.42",
+    "neo-blockchain-core": "^0.0.43",
+    "neo-blockchain-node-core": "^0.0.43",
     "through": "^2.3.8"
   }
 }

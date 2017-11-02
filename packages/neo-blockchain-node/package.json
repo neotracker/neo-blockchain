@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-node",
-  "version": "0.0.42",
+  "version": "0.0.43",
   "keywords": [
     "neo",
     "blockchain"
@@ -16,8 +16,8 @@
     "bloom-filter": "^0.2.0",
     "bn.js": "^4.11.8",
     "lodash": "^4.17.4",
-    "neo-blockchain-core": "^0.0.42",
-    "neo-blockchain-network": "^0.0.42",
-    "neo-blockchain-node-core": "^0.0.42"
+    "neo-blockchain-core": "^0.0.43",
+    "neo-blockchain-network": "^0.0.43",
+    "neo-blockchain-node-core": "^0.0.43"
   }
 }
