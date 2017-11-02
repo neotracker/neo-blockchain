@@ -1,9 +1,11 @@
 /* @flow */
-import CryptoJS, { type WordArray } from 'crypto-js';
 import WIF from 'wif';
 
 import bs58 from 'bs58';
+import crypto from 'crypto';
 import { ec as EC } from 'elliptic';
+import scrypt from 'scrypt-js';
+import xor from 'buffer-xor';
 
 import { InvalidFormatError } from '../errors';
 import { ScriptBuilder } from '../utils';
@@ -30,30 +32,34 @@ export class InvalidAddressError extends Error {
   address: string;
 
   constructor(address: string) {
-    super(`Invalid Address: ${address}`)
+    super(`Invalid Address: ${address}`);
     this.address = address;
   }
 }
 
-const toBuffer = (wordArray: WordArray): Buffer =>
-  Buffer.from(wordArray.toString(CryptoJS.enc.Hex), 'hex');
-
-const toWordArray = (buffer: Buffer): WordArray =>
-  CryptoJS.enc.Hex.parse(buffer.toString('hex'));
-
 const sha1 = (value: Buffer): Buffer =>
-  toBuffer(CryptoJS.SHA1(toWordArray(value)));
+  crypto
+    .createHash('sha1')
+    .update(value)
+    .digest();
 
 const sha256 = (value: Buffer): Buffer =>
-  toBuffer(CryptoJS.SHA256(toWordArray(value)));
+  crypto
+    .createHash('sha256')
+    .update(value)
+    .digest();
 
-const hash160 = (value: Buffer): UInt160 => common.bufferToUInt160(
-  toBuffer(CryptoJS.RIPEMD160(CryptoJS.SHA256(toWordArray(value))))
-);
+const rmd160 = (value: Buffer): Buffer =>
+  crypto
+    .createHash('rmd160')
+    .update(value)
+    .digest();
 
-const hash256 = (value: Buffer): UInt256 => common.bufferToUInt256(
-  toBuffer(CryptoJS.SHA256(CryptoJS.SHA256(toWordArray(value)))),
-);
+const hash160 = (value: Buffer): UInt160 =>
+  common.bufferToUInt160(rmd160(sha256(value)));
+
+const hash256 = (value: Buffer): UInt256 =>
+  common.bufferToUInt256(sha256(sha256(value)));
 
 // TODO: This + verify should probably handle DER format signatures as well
 const sign = ({
@@ -125,15 +131,20 @@ const createKeyPair = (): { privateKey: PrivateKey, publicKey: ECPoint } => {
   };
 };
 
+const createPrivateKey = (): PrivateKey =>
+  common.bufferToPrivateKey(crypto.randomBytes(32));
+
 const toScriptHash = (value: Buffer): UInt160 => hash160(value);
 
 // Takes various formats and converts to standard ECPoint
-const toECPoint = (publicKey: Buffer): ECPoint => toECPointFromKeyPair(
-  ec.keyFromPublic(publicKey),
-);
+const toECPoint = (publicKey: Buffer): ECPoint =>
+  toECPointFromKeyPair(ec.keyFromPublic(publicKey));
 
 const isInfinity = (ecPoint: ECPoint): boolean =>
-  ec.keyFromPublic(ecPoint).getPublic().isInfinity();
+  ec
+    .keyFromPublic(ecPoint)
+    .getPublic()
+    .isInfinity();
 
 const base58Checksum = (buffer: Buffer): Buffer =>
   common.uInt256ToBuffer(hash256(buffer)).slice(0, 4);
@@ -176,10 +187,7 @@ const addressToScriptHash = ({
   address: string,
 |}): UInt160 => {
   const decodedAddress = base58CheckDecode(address);
-  if (
-    decodedAddress.length !== 21 ||
-    decodedAddress[0] !== addressVersion
-  ) {
+  if (decodedAddress.length !== 21 || decodedAddress[0] !== addressVersion) {
     throw new InvalidAddressError(address);
   }
 
@@ -193,7 +201,7 @@ const createInvocationScript = (
   const builder = new ScriptBuilder();
   builder.emitPush(sign({ message, privateKey }));
   return builder.build();
-}
+};
 
 const createVerificationScript = (publicKey: ECPoint): Buffer => {
   const builder = new ScriptBuilder();
@@ -206,7 +214,7 @@ const createWitness = (message: Buffer, privateKey: PrivateKey): Witness => {
   const verification = createVerificationScript(getPublicKey(privateKey));
   const invocation = createInvocationScript(message, privateKey);
   return new Witness({ verification, invocation });
-}
+};
 
 const getVerificationScriptHash = (publicKey: ECPoint): UInt160 =>
   toScriptHash(createVerificationScript(publicKey));
@@ -220,7 +228,7 @@ const compareKeys = (a: KeyPair, b: KeyPair): number => {
   }
 
   return aPublic.getY().cmp(bPublic.getY());
-}
+};
 
 const sortKeys = (publicKeys: Array<ECPoint>): Array<ECPoint> =>
   publicKeys
@@ -241,18 +249,20 @@ const createMultiSignatureRedeemScript = (
   builder.emitPushInt(Math.floor(m));
   const publicKeysSorted = sortKeys(publicKeys);
   for (const ecPoint of publicKeysSorted) {
-    builder.emitPushECPoint(ecPoint)
+    builder.emitPushECPoint(ecPoint);
   }
   builder.emitPushInt(publicKeysSorted.length);
   builder.emitOp('CHECKMULTISIG');
   return builder.build();
-}
+};
 
 const getConsensusAddress = (validators: Array<ECPoint>): UInt160 =>
-  toScriptHash(createMultiSignatureRedeemScript(
-    validators.length - (validators.length - 1) / 3,
-    validators,
-  ));
+  toScriptHash(
+    createMultiSignatureRedeemScript(
+      validators.length - (validators.length - 1) / 3,
+      validators,
+    ),
+  );
 
 const wifToPrivateKey = (
   wif: string,
@@ -266,20 +276,162 @@ const wifToPrivateKey = (
     privateKeyDecoded[33] !== 0x01
   ) {
     throw new InvalidFormatError();
-	}
+  }
 
-	return common.bufferToPrivateKey(privateKeyDecoded.slice(1, 33));
+  return common.bufferToPrivateKey(privateKeyDecoded.slice(1, 33));
 };
 
 const privateKeyToWif = (
   privateKey: PrivateKey,
   privateKeyVersion: number,
 ): string =>
-  WIF.encode(
-    privateKeyVersion,
-    common.privateKeyToBuffer(privateKey),
-    true,
+  WIF.encode(privateKeyVersion, common.privateKeyToBuffer(privateKey), true);
+
+const privateKeyToScriptHash = (privateKey: PrivateKey): UInt160 =>
+  getVerificationScriptHash(getPublicKey(privateKey));
+
+const privateKeyToAddress = ({
+  addressVersion,
+  privateKey,
+}: {|
+  addressVersion: number,
+  privateKey: PrivateKey,
+|}): string =>
+  scriptHashToAddress({
+    addressVersion,
+    scriptHash: privateKeyToScriptHash(privateKey),
+  });
+
+const NEP2_KDFPARAMS = {
+  N: 16384,
+  r: 8,
+  p: 8,
+  dklen: 64,
+};
+
+const NEP2_ZERO = 0x01;
+const NEP2_ONE = 0x42;
+const NEP2_TWO = 0xe0;
+const NEP2_CIPHER = 'aes-256-ecb';
+
+const getNEP2Derived = ({
+  password,
+  salt,
+}: {|
+  password: string,
+  salt: Buffer,
+|}): Promise<Buffer> =>
+  new Promise((resolve, reject) =>
+    scrypt(
+      Buffer.from(password, 'utf8'),
+      salt,
+      NEP2_KDFPARAMS.N,
+      NEP2_KDFPARAMS.r,
+      NEP2_KDFPARAMS.p,
+      NEP2_KDFPARAMS.dklen,
+      (error, progress, key) => {
+        if (error != null) {
+          reject(error);
+        } else if (key) {
+          resolve(Buffer.from(key));
+        }
+      },
+    ),
   );
+
+const getNEP2Salt = ({
+  addressVersion,
+  privateKey,
+}: {|
+  addressVersion: number,
+  privateKey: PrivateKey,
+|}) => {
+  const address = privateKeyToAddress({
+    addressVersion,
+    privateKey,
+  });
+  return common
+    .uInt256ToBuffer(hash256(Buffer.from(address, 'latin1')))
+    .slice(0, 4);
+};
+
+const encryptNEP2 = async ({
+  addressVersion,
+  password,
+  privateKey,
+}: {|
+  addressVersion: number,
+  password: string,
+  privateKey: PrivateKey,
+|}): Promise<string> => {
+  const salt = getNEP2Salt({ addressVersion, privateKey });
+
+  const derived = await getNEP2Derived({ password, salt });
+  const derived1 = derived.slice(0, 32);
+  const derived2 = derived.slice(32, 64);
+
+  const cipher = crypto.createCipheriv(
+    NEP2_CIPHER,
+    derived2,
+    Buffer.alloc(0, 0),
+  );
+  cipher.setAutoPadding(false);
+  cipher.end(xor(privateKey, derived1));
+  const ciphertext = (cipher.final(): $FlowFixMe);
+
+  const result = Buffer.alloc(7 + 32, 0);
+  result.writeUInt8(0x01, NEP2_ZERO);
+  result.writeUInt8(0x42, NEP2_ONE);
+  result.writeUInt8(0xe0, NEP2_TWO);
+  salt.copy(result, 3);
+  ciphertext.copy(result, 7);
+
+  return base58CheckEncode(result);
+};
+
+const decryptNEP2 = async ({
+  addressVersion,
+  encryptedKey,
+  password,
+}: {|
+  addressVersion: number,
+  encryptedKey: string,
+  password: string,
+|}): Promise<PrivateKey> => {
+  const decoded = base58CheckDecode(encryptedKey);
+
+  if (
+    decoded.length !== 39 ||
+    decoded.readUInt8(0) !== NEP2_ZERO ||
+    decoded.readUInt8(1) !== NEP2_ONE ||
+    decoded.readUInt8(2) !== NEP2_TWO
+  ) {
+    throw new Error('Invalid NEP2 format.');
+  }
+
+  const salt = decoded.slice(3, 7);
+  const derived = await getNEP2Derived({ password, salt });
+  const derived1 = derived.slice(0, 32);
+  const derived2 = derived.slice(32, 64);
+
+  const decipher = crypto.createDecipheriv(
+    NEP2_CIPHER,
+    derived2,
+    Buffer.alloc(0, 0),
+  );
+  decipher.setAutoPadding(false);
+  decipher.end(decoded.slice(7, 7 + 32));
+  const plainText = decipher.final();
+
+  const privateKey = xor(plainText, derived1);
+
+  const addressSalt = getNEP2Salt({ addressVersion, privateKey });
+  if (!salt.equals(addressSalt)) {
+    throw new Error('Wrong passphrase.');
+  }
+
+  return common.bufferToPrivateKey(privateKey);
+};
 
 export default {
   sha1,
@@ -303,4 +455,9 @@ export default {
   getConsensusAddress,
   privateKeyToWif,
   wifToPrivateKey,
+  privateKeyToScriptHash,
+  privateKeyToAddress,
+  encryptNEP2,
+  decryptNEP2,
+  createPrivateKey,
 };

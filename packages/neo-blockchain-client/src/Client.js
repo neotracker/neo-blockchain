@@ -160,6 +160,45 @@ export default class Client {
     return crypto.wifToPrivateKey(wif, this._privateKeyVersion);
   }
 
+  privateKeyToAddress(privateKey: PrivateKeyLike): string {
+    return crypto.privateKeyToAddress({
+      addressVersion: this._addressVersion,
+      privateKey: converters.privateKey(this, privateKey),
+    });
+  }
+
+  createPrivateKey(): PrivateKey {
+    return crypto.createPrivateKey();
+  }
+
+  encryptNEP2({
+    password,
+    privateKey,
+  }: {|
+    password: string,
+    privateKey: PrivateKeyLike,
+  |}): Promise<string> {
+    return crypto.encryptNEP2({
+      addressVersion: this._addressVersion,
+      privateKey: converters.privateKey(this, privateKey),
+      password,
+    });
+  }
+
+  decryptNEP2({
+    password,
+    encryptedKey,
+  }: {|
+    password: string,
+    encryptedKey: string,
+  |}): Promise<PrivateKey> {
+    return crypto.decryptNEP2({
+      addressVersion: this._addressVersion,
+      encryptedKey,
+      password,
+    });
+  }
+
   _convertInputs(inputs: Array<InputArg>): Array<Input> {
     // TODO: Not covered by Flow...
     return inputs.map(

@@ -8,7 +8,7 @@ import utils from './utils';
 
 const add0x = (value: string) => `0x${value}`;
 const strip0x = (value: string) =>
-  value.startsWith('0x') ? value.substring(2) : value
+  value.startsWith('0x') ? value.substring(2) : value;
 
 // eslint-disable-next-line
 export opaque type UInt160 = Buffer;
@@ -39,8 +39,7 @@ const uInt160ToBuffer = (value: UInt160 | UInt160Hex): Buffer =>
 const uInt160ToString = (value: UInt160 | UInt160Hex): string =>
   typeof value === 'string' ? value : uInt160ToHex(value);
 
-const stringToUInt160 = (value: string): UInt160 =>
-  hexToUInt160(value);
+const stringToUInt160 = (value: string): UInt160 => hexToUInt160(value);
 
 const uInt160Equal = (a: UInt160, b: UInt160) => a.equals(b);
 
@@ -53,7 +52,7 @@ const asUInt160 = (value: mixed): UInt160 => {
   }
 
   throw new InvalidFormatError();
-}
+};
 
 const ZERO_UINT160 = (Buffer.alloc(20, 0): UInt160);
 
@@ -87,13 +86,12 @@ const uInt256ToBuffer = (value: UInt256 | UInt256Hex): Buffer =>
 const uInt256ToString = (value: UInt256 | UInt256Hex): string =>
   typeof value === 'string' ? value : uInt256ToHex(value);
 
-const stringToUInt256 = (value: string): UInt256 =>
-  hexToUInt256(value);
+const stringToUInt256 = (value: string): UInt256 => hexToUInt256(value);
 
 const uInt256Equal = (a: UInt256, b: UInt256) => a.equals(b);
 
 const toUInt32LE = (bytes: UInt256): number =>
-  (new BN(uInt256ToBuffer(bytes).slice(0, 4), 'le')).toNumber();
+  new BN(uInt256ToBuffer(bytes).slice(0, 4), 'le').toNumber();
 
 // eslint-disable-next-line
 export opaque type ECPointBase = Buffer;
@@ -105,16 +103,9 @@ export opaque type ECPointHex: string = string;
 // Encoded compressed ECPoint
 const ECPOINT_BUFFER_BYTES = 33;
 const ECPOINT_INFINITY_BYTE = 0x00;
-const ECPOINT_INFINITY = (Buffer.from([ECPOINT_INFINITY_BYTE]): ECPointInfinity);
-
-const ecPointToHex = (value: ECPoint | ECPointHex): ECPointHex =>
-  typeof value === 'string' ? value : value.toString('hex');
-
-const hexToECPoint = (value: ECPoint | ECPointHex): ECPoint =>
-  typeof value === 'string' ? Buffer.from(value, 'hex') : value;
-
-const ecPointToBuffer = (value: ECPoint | ECPointHex): Buffer =>
-  typeof value === 'string' ? hexToECPoint(value) : value;
+const ECPOINT_INFINITY = (Buffer.from([
+  ECPOINT_INFINITY_BYTE,
+]): ECPointInfinity);
 
 const bufferToECPoint = (value: Buffer): ECPoint => {
   if (value.length !== ECPOINT_BUFFER_BYTES) {
@@ -128,11 +119,21 @@ const bufferToECPoint = (value: Buffer): ECPoint => {
   return value;
 };
 
+const ecPointToHex = (value: ECPoint | ECPointHex): ECPointHex =>
+  typeof value === 'string' ? value : value.toString('hex');
+
+const hexToECPoint = (value: ECPoint | ECPointHex): ECPoint =>
+  bufferToECPoint(
+    typeof value === 'string' ? Buffer.from(value, 'hex') : value,
+  );
+
+const ecPointToBuffer = (value: ECPoint | ECPointHex): Buffer =>
+  typeof value === 'string' ? hexToECPoint(value) : value;
+
 const ecPointToString = (value: ECPoint | ECPointHex): string =>
   typeof value === 'string' ? value : ecPointToHex(value);
 
-const stringToECPoint = (value: string): ECPoint =>
-  hexToECPoint(value);
+const stringToECPoint = (value: string): ECPoint => hexToECPoint(value);
 
 const ecPointEqual = (a: ECPoint, b: ECPoint): boolean => a.equals(b);
 
@@ -158,15 +159,6 @@ export opaque type PrivateKeyHex: string = string;
 
 const PRIVATE_KEY_BUFFER_BYTES = 32;
 
-const privateKeyToHex = (value: PrivateKey | PrivateKeyHex): PrivateKeyHex =>
-  typeof value === 'string' ? value : value.toString('hex');
-
-const hexToPrivateKey = (value: PrivateKey | PrivateKeyHex): PrivateKey =>
-  typeof value === 'string' ? Buffer.from(value, 'hex') : value;
-
-const privateKeyToBuffer = (value: PrivateKey | PrivateKeyHex): Buffer =>
-  typeof value === 'string' ? hexToECPoint(value) : value;
-
 const bufferToPrivateKey = (value: Buffer): PrivateKey => {
   if (value.length !== PRIVATE_KEY_BUFFER_BYTES) {
     throw new InvalidFormatError();
@@ -175,10 +167,22 @@ const bufferToPrivateKey = (value: Buffer): PrivateKey => {
   return value;
 };
 
+const privateKeyToHex = (value: PrivateKey | PrivateKeyHex): PrivateKeyHex =>
+  typeof value === 'string' ? value : value.toString('hex');
+
+const hexToPrivateKey = (value: PrivateKey | PrivateKeyHex): PrivateKey =>
+  bufferToPrivateKey(
+    typeof value === 'string' ? Buffer.from(value, 'hex') : value,
+  );
+
+const privateKeyToBuffer = (value: PrivateKey | PrivateKeyHex): Buffer =>
+  typeof value === 'string' ? hexToPrivateKey(value) : value;
+
 const privateKeyToString = (value: PrivateKey | PrivateKeyHex): string =>
   typeof value === 'string' ? value : ecPointToHex(value);
 
-const stringToPrivateKey = (value: string): PrivateKey => hexToECPoint(value);
+const stringToPrivateKey = (value: string): PrivateKey =>
+  hexToPrivateKey(value);
 
 const D = new BN(100000000);
 const DBigNumber = new BigNumber(D.toString(10));
@@ -202,7 +206,7 @@ const fixed8FromDecimal = (value: number | string | BigNumber | BN): BN => {
 };
 
 const fixed8ToDecimal = (bn: BN): BigNumber =>
-  (new BigNumber(bn.toString(10))).div(DBigNumber);
+  new BigNumber(bn.toString(10)).div(DBigNumber);
 
 const NEGATIVE_SATOSHI_FIXED8 = new BN(-1);
 const ONE_HUNDRED_FIXED8 = fixed8FromDecimal(100);
