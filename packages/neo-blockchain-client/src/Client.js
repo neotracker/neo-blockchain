@@ -160,6 +160,13 @@ export default class Client {
     return crypto.wifToPrivateKey(wif, this._privateKeyVersion);
   }
 
+  privateKeyToWIF(privateKey: PrivateKeyLike): string {
+    return crypto.privateKeyToWif(
+      converters.privateKey(this, privateKey),
+      this._privateKeyVersion,
+    );
+  }
+
   privateKeyToAddress(privateKey: PrivateKeyLike): string {
     return crypto.privateKeyToAddress({
       addressVersion: this._addressVersion,
