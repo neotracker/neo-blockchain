@@ -55,6 +55,7 @@ const dependencies = [...new Set(sources.reduce(
   ),
   [],
 ))].concat([
+  'crypto',
   'fs',
   'http',
   'https',
@@ -73,13 +74,15 @@ const FORMATS = [
 
 const getBabelConfig = ({
   modules,
+  useBuiltIns,
 }: {|
   modules: boolean | string,
+  useBuiltIns?: boolean | string,
 |}) => ({
   babelrc: false,
   presets: [
     ['env', {
-      useBuiltIns: false,
+      useBuiltIns: useBuiltIns == null ? false : useBuiltIns,
       modules,
     }]
   ],
@@ -213,7 +216,10 @@ const transformSrc = ({ glob, map }: {| glob: string, map: any |}) => gulp
 
 gulp.task('build:bin', () =>
   transformSrc({ glob: srcBinGlob, map: swapSrcWithDist })
-    .pipe(gulpBabel(getBabelConfig({ modules: 'commonjs' })))
+    .pipe(gulpBabel(getBabelConfig({
+      modules: 'commonjs',
+      useBuiltIns: 'entry',
+    })))
     .pipe(gulp.dest(base)),
 );
 

@@ -1,3 +1,3 @@
 /* @flow */
+// eslint-disable-next-line
 export { default as getUA } from './getUA';
-export { default as subscribeAndTake } from './subscribeAndTake';

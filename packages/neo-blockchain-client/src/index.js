@@ -1,10 +1,17 @@
 /* @flow */
-export {
-  JSONRPCClient,
-  JSONRPCHttpProvider,
-} from './json';
+import { JSONRPCClient, JSONRPCHttpProvider } from './json';
+
+export { JSONRPCClient, JSONRPCHttpProvider } from './json';
 
 export { default as Client } from './Client';
+
+export const client = new JSONRPCClient(
+  new JSONRPCHttpProvider('https://neotracker.io/rpc'),
+);
+
+export const testClient = new JSONRPCClient(
+  new JSONRPCHttpProvider('https://testnet.neotracker.io/rpc'),
+);
 
 export type {
   Action,
@@ -48,9 +55,5 @@ export type {
   InteropInterfaceContractParameter,
   VoidContractParameter,
 } from './types';
-export type {
-  ActionFilter,
-  BlockFilter,
-  GetActionsFilter,
-} from './filter';
+export type { ActionFilter, BlockFilter, GetActionsFilter } from './filter';
 export type { JSONRPCProvider } from './json';

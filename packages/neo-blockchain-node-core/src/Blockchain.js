@@ -132,6 +132,8 @@ export type Blockchain = {
   }) => Promise<void>,
 
   +invokeScript: (script: Buffer) => Promise<InvocationResult>,
+
+  +stop: () => Promise<void>,
 };
 
 export type WriteBlockchain = {

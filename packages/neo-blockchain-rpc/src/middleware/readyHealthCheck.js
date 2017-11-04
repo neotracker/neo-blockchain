@@ -1,13 +1,11 @@
 /* @flow */
 import type { Blockchain } from 'neo-blockchain-node-core';
 import type { Context } from 'koa';
-import type { Observable } from 'rxjs/Observable';
 
 import _ from 'lodash';
 import mount from 'koa-mount';
 
-import { getLog } from './common';
-import { subscribeAndTake } from '../utils';
+import { getLog, simpleMiddleware } from './common';
 
 const TIMEOUT_MS = 5000;
 
@@ -62,39 +60,16 @@ export type Options = {|
   offset: number,
 |};
 
-export default async ({
-  blockchain$,
-  options$,
+export default ({
+  blockchain,
+  options,
 }: {|
-  blockchain$: Observable<Blockchain>,
-  options$: Observable<Options>,
-|}) => {
-  let blockchain;
-  let options;
-  const [blockchainResult, optionsResult] = await Promise.all([
-    subscribeAndTake({
-      observable: blockchain$,
-      next: nextBlockchain => {
-        blockchain = nextBlockchain;
-        return nextBlockchain;
-      },
-    }),
-    subscribeAndTake({
-      observable: options$,
-      next: nextOptions => {
-        options = nextOptions;
-        return nextOptions;
-      },
-    }),
-  ]);
-  blockchain = blockchainResult.out;
-  let blockchainSubscription = blockchainResult.subscription;
-  options = optionsResult.out;
-  let optionsSubscription = optionsResult.subscription;
-
-  return {
-    name: 'readyHealthCheck',
-    middleware: mount('/ready_health_check', async (ctx: Context) => {
+  blockchain: Blockchain,
+  options: Options,
+|}) =>
+  simpleMiddleware(
+    'readyHealthCheck',
+    mount('/ready_health_check', async (ctx: Context) => {
       const log = getLog(ctx);
       const index = await fetchTallestBlockIndex(options.rpcEndpoints);
       if (
@@ -111,16 +86,4 @@ export default async ({
         ctx.status = 500;
       }
     }),
-    stop: () => {
-      if (blockchainSubscription != null) {
-        blockchainSubscription.unsubscribe();
-        blockchainSubscription = null;
-      }
-
-      if (optionsSubscription != null) {
-        optionsSubscription.unsubscribe();
-        optionsSubscription = null;
-      }
-    },
-  };
-};
+  );

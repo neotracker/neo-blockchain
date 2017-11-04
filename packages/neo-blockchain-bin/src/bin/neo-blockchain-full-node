@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 /* @flow */
+import 'babel-polyfill';
 import type { FullNode } from 'neo-blockchain-full-node';
 
 import program from 'commander';

@@ -1,8 +1,13 @@
 /* @flow */
-import FullNode, { type Chain } from 'neo-blockchain-full-node';
-import { Observable } from 'rxjs/Observable';
+import {
+  type Blockchain,
+  createEndpoint,
+  createProfile,
+} from 'neo-blockchain-node-core';
+import { type Chain, loadChain, dumpChain } from 'neo-blockchain-offline';
+import FullNode from 'neo-blockchain-full-node';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 
-import { createEndpoint, createProfile } from 'neo-blockchain-node-core';
 import { main, test } from 'neo-blockchain-neo-settings';
 import { createLogger, transports as winstonTransports } from 'winston';
 
@@ -13,10 +18,12 @@ export default async ({
   testNet,
   dataPath: dataPathIn,
   chain: chainIn,
+  dumpPath: dumpPathIn,
 }: {
   testNet: boolean,
   dataPath: string,
   chain?: Chain,
+  dumpPath?: string,
 }) => {
   const transports = [];
   transports.push(
@@ -28,28 +35,26 @@ export default async ({
   const log = createServerLogger(createLogger({ transports }));
 
   const dataPath = resolveHome(dataPathIn);
-  const chain =
-    chainIn == null
-      ? {
-          enabled: false,
-          chain: {
-            format: 'raw',
-            path: 'doesntmatter',
-          },
-        }
-      : {
-          enabled: true,
-          chain: {
-            format: chainIn.format,
-            path: resolveHome(chainIn.path),
-          },
-        };
 
+  let onCreateBlockchain;
+  const dumpPath = dumpPathIn;
+  const chain = chainIn;
+  if (dumpPath != null) {
+    onCreateBlockchain = async (blockchain: Blockchain) => {
+      await dumpChain({ blockchain, path: dumpPath });
+    };
+  } else if (chain != null) {
+    onCreateBlockchain = async (blockchain: Blockchain) => {
+      await loadChain({ blockchain, chain });
+    };
+  }
+
+  let settings;
   let options;
   if (testNet) {
+    settings = test;
     options = {
       node: {
-        settings: test,
         seeds: [
           { type: 'tcp', host: 'seed1.neo.org', port: 20333 },
           { type: 'tcp', host: 'seed2.neo.org', port: 20333 },
@@ -58,7 +63,6 @@ export default async ({
           { type: 'tcp', host: 'seed5.neo.org', port: 20333 },
         ].map(value => createEndpoint(value)),
         dataPath,
-        chain,
       },
       rpc: {
         server: {
@@ -86,9 +90,9 @@ export default async ({
       },
     };
   } else {
+    settings = main;
     options = {
       node: {
-        settings: main,
         seeds: [
           { type: 'tcp', host: 'seed1.neo.org', port: 10333 },
           { type: 'tcp', host: 'seed2.neo.org', port: 10333 },
@@ -97,7 +101,6 @@ export default async ({
           { type: 'tcp', host: 'seed5.neo.org', port: 10333 },
         ].map(value => createEndpoint(value)),
         dataPath,
-        chain,
       },
       rpc: {
         server: {
@@ -126,11 +129,18 @@ export default async ({
     };
   }
 
+  const subject = new ReplaySubject(1);
+  subject.next(options);
   const node = new FullNode({
     log,
     createLogForContext: () => log,
     createProfile,
-    options$: Observable.of(options),
+    settings,
+    options$: subject,
+    onError: () => {
+      subject.complete();
+    },
+    onCreateBlockchain,
   });
   return node;
 };

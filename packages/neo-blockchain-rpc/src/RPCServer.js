@@ -1,7 +1,7 @@
 /* @flow */
 import type { Blockchain, Log, Node } from 'neo-blockchain-node-core';
 import Koa from 'koa';
-import type { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 
 import http from 'http';
 import https from 'https';
@@ -10,12 +10,11 @@ import {
   type CreateLogForContext,
   type CreateProfile,
   type ReadyHealthCheckOptions,
-  type ServerMiddleware,
   context,
   cors,
   liveHealthCheck,
   logger,
-  onError,
+  onError as appOnError,
   readyHealthCheck,
   rpc,
 } from './middleware';
@@ -47,6 +46,7 @@ export default class RPCServer {
   _node$: Observable<Node>;
   _options$: Observable<Options>;
   _shutdownFuncs: Array<() => Promise<void> | void>;
+  _onError: () => void;
 
   constructor({
     log,
@@ -55,6 +55,7 @@ export default class RPCServer {
     blockchain$,
     node$,
     options$,
+    onError,
   }: {|
     log: Log,
     createLogForContext: CreateLogForContext,
@@ -62,6 +63,7 @@ export default class RPCServer {
     blockchain$: Observable<Blockchain>,
     node$: Observable<Node>,
     options$: Observable<Options>,
+    onError?: () => void,
   |}) {
     this._log = log;
     this._createLogForContext = createLogForContext;
@@ -70,52 +72,17 @@ export default class RPCServer {
     this._node$ = node$;
     this._options$ = options$;
     this._shutdownFuncs = [];
+    this._onError = onError || (() => {});
   }
 
   async start(): Promise<void> {
     this._log({ event: 'SERVER_START' });
-    const app = new Koa();
-    app.proxy = true;
-    // We have our own handlers for errors
-    // $FlowFixMe
-    app.silent = true;
-    app.on('error', onError({ log: this._log }));
-
-    const [readyHealthCheckMiddleware, rpcMiddleware] = await Promise.all([
-      readyHealthCheck({
-        blockchain$: this._blockchain$,
-        options$: this._options$
-          .map(options => options.readyHealthCheck)
-          .distinct(),
-      }),
-      rpc({
-        blockchain$: this._blockchain$,
-        node$: this._node$,
-      }),
-    ]);
-
-    this.addMiddleware(
-      app,
-      context({
-        createLog: this._createLogForContext,
-        createProfile: this._createProfile,
-      }),
-    );
-    this.addMiddleware(app, liveHealthCheck);
-    this.addMiddleware(app, readyHealthCheckMiddleware);
-    this.addMiddleware(app, logger);
-    this.addMiddleware(app, cors);
-    this.addMiddleware(app, rpcMiddleware);
+    const app$ = this._getApp$();
 
     await Promise.all([
-      this._startHTTPServer(app),
-      this._startHTTPSServer(app),
+      this._startHTTPServer(app$),
+      this._startHTTPSServer(app$),
     ]);
-  }
-
-  addMiddleware(app: Koa, { middleware, stop }: ServerMiddleware): void {
-    app.use(middleware);
-    this._shutdownFuncs.push(stop);
   }
 
   async stop(): Promise<void> {
@@ -123,7 +90,7 @@ export default class RPCServer {
     this._shutdownFuncs = [];
   }
 
-  async _startHTTPServer(app: Koa): Promise<void> {
+  async _startHTTPServer(app$: Observable<Koa>): Promise<void> {
     const options = await this._options$.take(1).toPromise();
     const httpOptions = options.server.http;
     if (httpOptions == null) {
@@ -131,19 +98,17 @@ export default class RPCServer {
     }
 
     const { host, port } = httpOptions;
-    const httpServer = http.createServer(app.callback());
-    // $FlowFixMe
-    httpServer.keepAliveTimeout = options.server.keepAliveTimeout;
-    await new Promise(resolve =>
-      httpServer.listen(port, host, 511, () => resolve()),
-    );
-    this._log({ event: 'SERVER_LISTENING', host, port });
-    this._shutdownFuncs.push(
-      () => new Promise(resolve => httpServer.close(() => resolve())),
+    const httpServer = http.createServer();
+    await this._setupServer(
+      httpServer,
+      options.server.keepAliveTimeout,
+      host,
+      port,
+      app$,
     );
   }
 
-  async _startHTTPSServer(app: Koa): Promise<void> {
+  async _startHTTPSServer(app$: Observable<Koa>): Promise<void> {
     const options = await this._options$.take(1).toPromise();
     const httpsOptions = options.server.https;
     if (httpsOptions == null) {
@@ -151,15 +116,84 @@ export default class RPCServer {
     }
 
     const { key, cert, host, port } = httpsOptions;
-    const httpsServer = https.createServer({ key, cert }, app.callback());
+    const httpsServer = https.createServer({ key, cert });
+    await this._setupServer(
+      httpsServer,
+      options.server.keepAliveTimeout,
+      host,
+      port,
+      app$,
+    );
+  }
+
+  _getApp$(): Observable<Koa> {
+    return Observable.combineLatest(
+      this._blockchain$,
+      this._node$,
+      this._options$.map(options => options.readyHealthCheck).distinct(),
+    )
+      .map(([blockchain, node, readyHealthCheckOptions]) => {
+        const app = new Koa();
+        app.proxy = true;
+        // $FlowFixMe
+        app.silent = true;
+
+        app.on('error', appOnError({ log: this._log }));
+
+        const middlewares = [
+          context({
+            createLog: this._createLogForContext,
+            createProfile: this._createProfile,
+          }),
+          liveHealthCheck,
+          readyHealthCheck({ blockchain, options: readyHealthCheckOptions }),
+          logger,
+          cors,
+          rpc({ blockchain, node }),
+        ];
+
+        for (const middleware of middlewares) {
+          app.use(middleware.middleware);
+        }
+
+        return app;
+      })
+      .publishReplay(1)
+      .refCount();
+  }
+
+  async _setupServer(
+    server: http.Server | https.Server,
+    keepAliveTimeout: number,
+    host: string,
+    port: number,
+    app$: Observable<Koa>,
+  ): Promise<void> {
+    let listener;
+    const subscription = app$.subscribe({
+      next: app => {
+        if (listener != null) {
+          server.removeListener('request', listener);
+        }
+
+        listener = app.callback();
+        server.on('request', listener);
+      },
+      error: error => {
+        this._log({ event: 'SERVER_APP_SUBSCRIBE_ERROR', error });
+        this.stop().then(() => this._onError());
+      },
+    });
+    this._shutdownFuncs.push(() => subscription.unsubscribe());
     // $FlowFixMe
-    httpsServer.keepAliveTimeout = options.server.keepAliveTimeout;
+    server.keepAliveTimeout = keepAliveTimeout; // eslint-disable-line
+
     await new Promise(resolve =>
-      httpsServer.listen(port, host, 511, () => resolve()),
+      server.listen(port, host, 511, () => resolve()),
     );
     this._log({ event: 'SERVER_LISTENING', host, port });
     this._shutdownFuncs.push(
-      () => new Promise(resolve => httpsServer.close(() => resolve())),
+      () => new Promise(resolve => server.close(() => resolve())),
     );
   }
 }

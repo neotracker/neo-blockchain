@@ -98,6 +98,8 @@ export default class Blockchain {
   _blockQueue: PriorityQueue;
   _inQueue: Set<number>;
   _vm: VM;
+  _running: boolean;
+  _doneRunningResolve: ?() => void;
 
   constructor(options: BlockchainOptions) {
     this._storage = options.storage;
@@ -109,6 +111,8 @@ export default class Blockchain {
     });
     this._inQueue = new Set();
     this._vm = options.vm;
+    this._running = true;
+    this._doneRunningResolve = null;
 
     this.settings = options.settings;
     this.log = options.log;
@@ -177,6 +181,23 @@ export default class Blockchain {
     }
 
     return blockchain;
+  }
+
+  async stop(): Promise<void> {
+    if (!this._running) {
+      return;
+    }
+
+    if (this._persistingBlocks) {
+      const doneRunningPromise = new Promise(resolve => {
+        this._doneRunningResolve = resolve;
+      });
+      this._running = false;
+
+      await doneRunningPromise;
+    } else {
+      this._running = false;
+    }
   }
 
   get currentBlock(): Block {
@@ -290,7 +311,7 @@ export default class Blockchain {
   }
 
   async _persistBlocksAsync(): Promise<void> {
-    if (this._persistingBlocks) {
+    if (this._persistingBlocks || !this._running) {
       return;
     }
 
@@ -300,6 +321,7 @@ export default class Blockchain {
       this.cleanBlockQueue();
       entry = this.peekBlockQueue();
       while (
+        this._running &&
         entry != null &&
         entry.block.index === this.currentBlockIndex + 1
       ) {
@@ -329,6 +351,10 @@ export default class Blockchain {
       });
     } finally {
       this._persistingBlocks = false;
+      if (this._doneRunningResolve != null) {
+        this._doneRunningResolve();
+        this._doneRunningResolve = null;
+      }
     }
   }
 

@@ -4,9 +4,7 @@ import {
   type Blockchain as BlockchainType,
   type Endpoint,
   type Log,
-  type Storage,
 } from 'neo-blockchain-node-core';
-import { type Chain, dumpChain, loadChain } from 'neo-blockchain-offline';
 import Node from 'neo-blockchain-node';
 import { Observable } from 'rxjs/Observable';
 import { type Settings } from 'neo-blockchain-core';
@@ -15,7 +13,6 @@ import {
   type CreateProfile,
   type RPCServerOptions,
   RPCServer,
-  subscribeAndTake,
 } from 'neo-blockchain-rpc';
 import type { Subscription } from 'rxjs/Subscription';
 
@@ -26,12 +23,7 @@ import vm from 'neo-blockchain-vm';
 
 export type NodeOptions = {|
   seeds: Array<Endpoint>,
-  settings: Settings,
   dataPath: string,
-  chain: {|
-    enabled: boolean,
-    chain: Chain,
-  |},
 |};
 
 export type Options = {|
@@ -48,128 +40,120 @@ export default class FullNode {
   _log: Log;
   _createLogForContext: CreateLogForContext;
   _createProfile: CreateProfile;
+  _settings: Settings;
   _options$: Observable<Options>;
-  _blockchain: ?BlockchainType;
-  _node: ?Node;
-  _rpcServer: ?RPCServer;
-  _storage: ?Storage;
+  _onError: () => void;
+  _onCreateBlockchain: (blockchain: BlockchainType) => Promise<void>;
   _subscription: ?Subscription;
-  _nodeAndBlockchain$: Observable<NodeAndBlockchain>;
+  _rpcServer: ?RPCServer;
 
   constructor({
     log,
     createLogForContext,
     createProfile,
+    settings,
     options$,
+    onError,
+    onCreateBlockchain,
   }: {|
     log: Log,
     createLogForContext: CreateLogForContext,
     createProfile: CreateProfile,
+    settings: Settings,
     options$: Observable<Options>,
+    onError?: () => void,
+    onCreateBlockchain?: (blockchain: BlockchainType) => Promise<void>,
   |}) {
     this._log = log;
     this._createLogForContext = createLogForContext;
     this._createProfile = createProfile;
+    this._settings = settings;
     this._options$ = options$;
-    this._blockchain = null;
-    this._node = null;
-    this._rpcServer = null;
-    this._storage = null;
+    this._onError = onError || (() => {});
+    this._onCreateBlockchain =
+      // eslint-disable-next-line
+      onCreateBlockchain || (async (blockchain: BlockchainType) => {});
     this._subscription = null;
-
-    this._nodeAndBlockchain$ = this._options$
-      .map(options => options.node)
-      .distinct()
-      .concatMap(options =>
-        Observable.fromPromise(this._stop().then(() => this._start(options))),
-      )
-      .publishReplay(1)
-      .refCount();
+    this._rpcServer = null;
   }
 
   async start(): Promise<void> {
-    // eslint-disable-next-line
-    const [result, _] = await Promise.all([
-      subscribeAndTake({
-        observable: this._nodeAndBlockchain$,
-        next: () => {},
-      }),
-      this._startRPCServer(),
-    ]);
-    this._subscription = result.subscription;
+    const nodeAndBlockchain$ = this._getNodeAndBlockchain$();
+    this._subscription = nodeAndBlockchain$.subscribe();
+    this._startRPCServer(nodeAndBlockchain$);
   }
 
-  async _start(options: NodeOptions): Promise<NodeAndBlockchain> {
-    this._storage = levelUpStorage({
-      db: levelup(leveldown(options.dataPath)),
-      context: { messageMagic: options.settings.messageMagic },
-    });
-    const blockchain = await Blockchain.create({
-      settings: options.settings,
-      storage: this._storage,
-      vm,
-      log: this._log,
-    });
-    this._blockchain = blockchain;
-    if (options.chain.enabled) {
-      await loadChain({
-        blockchain,
-        chain: options.chain.chain,
-      });
-    }
+  _getNodeAndBlockchain$(): Observable<NodeAndBlockchain> {
+    const dispose = async ({ storage, blockchain, node }) => {
+      try {
+        await node.stop();
+        await blockchain.stop();
+        await storage.close();
+      } catch (error) {
+        this._log({ event: 'FULL_NODE_DISPOSE_ERROR', error });
+        await this.stop();
+        this._onError();
+      }
+    };
 
-    const node = new Node({ blockchain, seeds: options.seeds });
-    this._node = node;
-    node.start();
+    let currentResources = null;
+    return this._options$
+      .map(options => options.node)
+      .distinct()
+      .concatMap(options =>
+        Observable.fromPromise(
+          Promise.resolve().then(async () => {
+            if (currentResources != null) {
+              await dispose(currentResources);
+            }
 
-    return { node, blockchain };
+            const storage = levelUpStorage({
+              db: levelup(leveldown(options.dataPath)),
+              context: { messageMagic: this._settings.messageMagic },
+            });
+            const blockchain = await Blockchain.create({
+              settings: this._settings,
+              storage,
+              vm,
+              log: this._log,
+            });
+            await this._onCreateBlockchain(blockchain);
+
+            const node = new Node({ blockchain, seeds: options.seeds });
+            node.start();
+
+            currentResources = { storage, blockchain, node };
+            return { node, blockchain };
+          }),
+        ),
+      )
+      .finally(() => {
+        if (currentResources != null) {
+          dispose(currentResources);
+        }
+      })
+      .shareReplay(1);
   }
 
-  async _startRPCServer(): Promise<void> {
-    const rpcServer = new RPCServer({
+  async _startRPCServer(
+    nodeAndBlockchain$: Observable<NodeAndBlockchain>,
+  ): Promise<void> {
+    this._rpcServer = new RPCServer({
       log: this._log,
       createLogForContext: this._createLogForContext,
       createProfile: this._createProfile,
-      blockchain$: this._nodeAndBlockchain$.map(({ blockchain }) => blockchain),
-      node$: this._nodeAndBlockchain$.map(({ node }) => node),
+      blockchain$: nodeAndBlockchain$.map(({ blockchain }) => blockchain),
+      node$: nodeAndBlockchain$.map(({ node }) => node),
       options$: this._options$.map(options => options.rpc).distinct(),
+      onError: this._onError,
     });
-    this._rpcServer = rpcServer;
-    await rpcServer.start();
+    await this._rpcServer.start();
   }
 
   async stop(): Promise<void> {
-    if (this._subscription != null) {
-      this._subscription.unsubscribe();
-      this._subscription = null;
-    }
-
     if (this._rpcServer != null) {
       await this._rpcServer.stop();
       this._rpcServer = null;
-    }
-
-    await this._stop();
-  }
-
-  async _stop(): Promise<void> {
-    if (this._node != null) {
-      this._node.stop();
-      this._node = null;
-    }
-
-    if (this._storage != null) {
-      await this._storage.close();
-      this._storage = null;
-    }
-  }
-
-  async dump(outPath: string): Promise<void> {
-    if (this._blockchain != null) {
-      await dumpChain({
-        blockchain: this._blockchain,
-        path: outPath,
-      });
     }
   }
 }

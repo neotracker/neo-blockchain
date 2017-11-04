@@ -1,4 +1,5 @@
 /* @flow */
+/* eslint-disable */
 // FIXME(samgoldman) Remove top-level interface once Babel supports
 // `declare interface` syntax.
 // FIXME(samgoldman) Remove this once rxjs$Subject<T> can mixin rxjs$Observer<T>
@@ -282,6 +283,10 @@ declare class rxjs$Observable<+T> {
   ): rxjs$Observable<U>;
 
   share(): rxjs$Observable<T>;
+
+  shareReplay(
+    bufferSize: number,
+  ): rxjs$Observable<T>;
 
   skip(count: number): rxjs$Observable<T>;
 

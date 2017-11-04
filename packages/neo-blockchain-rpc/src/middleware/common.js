@@ -23,7 +23,6 @@ export const getProfile = (ctx: Context): Profile => {
 export type ServerMiddleware = {|
   name: string,
   middleware: Middleware,
-  stop: () => Promise<void> | void,
 |};
 
 export const simpleMiddleware = (
@@ -32,5 +31,4 @@ export const simpleMiddleware = (
 ): ServerMiddleware => ({
   name,
   middleware,
-  stop: () => {},
 });

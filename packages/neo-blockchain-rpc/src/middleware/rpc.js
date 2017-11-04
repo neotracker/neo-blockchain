@@ -10,7 +10,6 @@ import {
 import { type Blockchain, type Node } from 'neo-blockchain-node-core';
 import type { GetActionsFilter } from 'neo-blockchain-client';
 import { type Context } from 'koa';
-import type { Observable } from 'rxjs/Observable';
 
 import _ from 'lodash';
 import compose from 'koa-compose';
@@ -22,38 +21,15 @@ import mount from 'koa-mount';
 import { RPCError, RPCUnknownError } from '../errors';
 
 import bodyParser from './bodyParser';
-import { subscribeAndTake } from '../utils';
+import { simpleMiddleware } from './common';
 
-export default async ({
-  blockchain$,
-  node$,
+export default ({
+  blockchain,
+  node,
 }: {|
-  blockchain$: Observable<Blockchain>,
-  node$: Observable<Node>,
+  blockchain: Blockchain,
+  node: Node,
 |}) => {
-  let blockchain;
-  let node;
-  const [blockchainResult, nodeResult] = await Promise.all([
-    subscribeAndTake({
-      observable: blockchain$,
-      next: nextBlockchain => {
-        blockchain = nextBlockchain;
-        return nextBlockchain;
-      },
-    }),
-    subscribeAndTake({
-      observable: node$,
-      next: nextNode => {
-        node = nextNode;
-        return nextNode;
-      },
-    }),
-  ]);
-  blockchain = blockchainResult.out;
-  let blockchainSubscription = blockchainResult.subscription;
-  node = nodeResult.out;
-  let nodeSubscription = nodeResult.subscription;
-
   const checkHeight = (height: number) => {
     if (height < 0 && height > blockchain.currentBlockIndex) {
       // eslint-disable-next-line
@@ -101,8 +77,7 @@ export default async ({
 
       if (args[1]) {
         const json = await block.serializeJSON(blockchain.serializeJSONContext);
-        // TODO: Same here, not sure if we should support this. Slows down
-        //       unnecessarily.
+        // TODO: Integrate into serializeJSON
         // json.confirmations = blockchain.currentBlockIndex - block.index + 1;
         // const nextBlock = await blockchain.block.tryGet({
         //   hashOrIndex: block.index + 1,
@@ -306,9 +281,9 @@ export default async ({
     }),
   );
 
-  return {
-    name: 'rpc',
-    middleware: mount(
+  return simpleMiddleware(
+    'rpc',
+    mount(
       '/rpc',
       compose([
         compress(),
@@ -325,16 +300,5 @@ export default async ({
         connect(server.middleware({ end: false })),
       ]),
     ),
-    stop: () => {
-      if (blockchainSubscription != null) {
-        blockchainSubscription.unsubscribe();
-        blockchainSubscription = null;
-      }
-
-      if (nodeSubscription != null) {
-        nodeSubscription.unsubscribe();
-        nodeSubscription = null;
-      }
-    },
-  };
+  );
 };
