@@ -1,4 +1,5 @@
 /* @flow */
+import { AsyncIterableX as AsyncIterable } from 'ix/asynciterable';
 import BN from 'bn.js';
 import BigNumber from 'bignumber.js';
 import {
@@ -12,7 +13,6 @@ import {
   utils,
 } from 'neo-blockchain-core';
 
-import { of as asyncIterableOf } from 'ix/asynciterable/of';
 import { flatMap } from 'ix/asynciterable/flatmap';
 
 import type {
@@ -69,25 +69,29 @@ export default class SmartContractInstance {
         indexStart: filter.blockIndexStart,
         indexStop: filter.blockIndexStop,
       }),
-      async (block) => {
+      async block => {
         const actions = await this._client.getActions({
           blockIndexStart: block.index,
-          transactionIndexStart: block.index === filter.blockIndexStart
-            ? filter.transactionIndexStart
-            : undefined,
-          indexStart: block.index === filter.blockIndexStart
-            ? filter.indexStart
-            : undefined,
+          transactionIndexStart:
+            block.index === filter.blockIndexStart
+              ? filter.transactionIndexStart
+              : undefined,
+          indexStart:
+            block.index === filter.blockIndexStart
+              ? filter.indexStart
+              : undefined,
           blockIndexStop: block.index,
-          transactionIndexStop: block.index === filter.blockIndexStop
-            ? filter.transactionIndexStop
-            : undefined,
-          indexStop: block.index === filter.blockIndexStop
-            ? filter.indexStop
-            : undefined,
+          transactionIndexStop:
+            block.index === filter.blockIndexStop
+              ? filter.transactionIndexStop
+              : undefined,
+          indexStop:
+            block.index === filter.blockIndexStop
+              ? filter.indexStop
+              : undefined,
           scriptHash: JSONHelper.writeUInt160(this._contractScriptHash),
         });
-        return asyncIterableOf(...actions);
+        return AsyncIterable.of(...actions);
       },
     );
   }
@@ -105,7 +109,7 @@ export default class SmartContractInstance {
     const fromAddress = converters.hash160(this._client, fromAddressIn);
     const toAddress = converters.hash160(this._client, toAddressIn);
     const value = converters.number(this._client, valueIn);
-    const decimals =  await this.decimals();
+    const decimals = await this.decimals();
     const sb = new ScriptBuilder();
     sb.emitAppCall(
       this._contractScriptHash,
@@ -187,11 +191,12 @@ export default class SmartContractInstance {
       sb.emitAppCall(this._contractScriptHash, 'decimals');
       sb.emitAppCall(this._contractScriptHash, 'totalSupply');
       this._data = this._invokeScript(sb.build())
-        .then((result) => {
+        .then(result => {
           const name = this._client.parameters.toString(result[3]);
           const symbol = this._client.parameters.toString(result[2]);
-          const decimals =
-            this._client.parameters.toInteger(result[1]).toNumber();
+          const decimals = this._client.parameters
+            .toInteger(result[1])
+            .toNumber();
           const totalSupply = this._integerToNumber(
             this._client.parameters.toInteger(result[0]),
             decimals,
@@ -203,10 +208,10 @@ export default class SmartContractInstance {
             totalSupply,
           };
         })
-        .catch((error) => {
+        .catch(error => {
           this._data = null;
           throw error;
-        })
+        });
     }
     return this._data;
   }

@@ -3195,11 +3195,11 @@ isstream@0.1.x, isstream@~0.1.2:
   version "0.1.2"
   resolved "https://registry.npmjs.org/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
 
-ix@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/ix/-/ix-2.2.0.tgz#9c3e18fa75b794f3452b7f20661c0aa58d9ebf8e"
+ix@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.npmjs.org/ix/-/ix-2.3.0.tgz#945e1024a18f0c7d18735a8b06fd95a334dbeb1c"
   dependencies:
-    tslib "^1.7.1"
+    tslib "^1.8.0"
 
 jayson@^2.0.4:
   version "2.0.4"
@@ -5331,7 +5331,7 @@ tryit@^1.0.1:
   version "1.0.3"
   resolved "https://registry.npmjs.org/tryit/-/tryit-1.0.3.tgz#393be730a9446fd1ead6da59a014308f36c289cb"
 
-tslib@^1.7.1:
+tslib@^1.8.0:
   version "1.8.0"
   resolved "https://registry.npmjs.org/tslib/-/tslib-1.8.0.tgz#dc604ebad64bcbf696d613da6c954aa0e7ea1eb6"
 
