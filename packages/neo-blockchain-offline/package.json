@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-offline",
-  "version": "0.0.43",
+  "version": "0.0.45",
   "keywords": [
     "neo",
     "blockchain"
@@ -14,6 +14,6 @@
   "dependencies": {
     "lodash": "^4.17.4",
     "neo-blockchain-core": "^0.0.43",
-    "neo-blockchain-node-core": "^0.0.43"
+    "neo-blockchain-node-core": "^0.0.45"
   }
 }
