@@ -51,8 +51,15 @@ export default async ({
 
   let settings;
   let options;
+  let rpcEnvironment;
   if (testNet) {
     settings = test;
+    rpcEnvironment = {
+      http: {
+        host: '0.0.0.0',
+        port: 8081,
+      },
+    };
     options = {
       node: {
         seeds: [
@@ -62,14 +69,9 @@ export default async ({
           { type: 'tcp', host: 'seed4.neo.org', port: 20333 },
           { type: 'tcp', host: 'seed5.neo.org', port: 20333 },
         ].map(value => createEndpoint(value)),
-        dataPath,
       },
       rpc: {
         server: {
-          http: {
-            host: '0.0.0.0',
-            port: 8081,
-          },
           keepAliveTimeout: 65000,
         },
         readyHealthCheck: {
@@ -91,6 +93,12 @@ export default async ({
     };
   } else {
     settings = main;
+    rpcEnvironment = {
+      http: {
+        host: '0.0.0.0',
+        port: 8081,
+      },
+    };
     options = {
       node: {
         seeds: [
@@ -100,14 +108,9 @@ export default async ({
           { type: 'tcp', host: 'seed4.neo.org', port: 10333 },
           { type: 'tcp', host: 'seed5.neo.org', port: 10333 },
         ].map(value => createEndpoint(value)),
-        dataPath,
       },
       rpc: {
         server: {
-          http: {
-            host: '0.0.0.0',
-            port: 8081,
-          },
           keepAliveTimeout: 65000,
         },
         readyHealthCheck: {
@@ -136,6 +139,10 @@ export default async ({
     createLogForContext: () => log,
     createProfile,
     settings,
+    environment: {
+      dataPath,
+      rpc: rpcEnvironment,
+    },
     options$: subject,
     onError: () => {
       subject.complete();

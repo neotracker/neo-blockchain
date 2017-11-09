@@ -20,6 +20,10 @@ import {
 } from './middleware';
 
 export type ServerOptions = {|
+  keepAliveTimeout: number,
+|};
+
+export type Environment = {|
   http?: {|
     port: number,
     host: string,
@@ -30,7 +34,6 @@ export type ServerOptions = {|
     port: number,
     host: string,
   |},
-  keepAliveTimeout: number,
 |};
 
 export type Options = {|
@@ -44,6 +47,7 @@ export default class RPCServer {
   _createProfile: CreateProfile;
   _blockchain$: Observable<Blockchain>;
   _node$: Observable<Node>;
+  _environment: Environment;
   _options$: Observable<Options>;
   _shutdownFuncs: Array<() => Promise<void> | void>;
   _onError: () => void;
@@ -54,6 +58,7 @@ export default class RPCServer {
     createProfile,
     blockchain$,
     node$,
+    environment,
     options$,
     onError,
   }: {|
@@ -62,6 +67,7 @@ export default class RPCServer {
     createProfile: CreateProfile,
     blockchain$: Observable<Blockchain>,
     node$: Observable<Node>,
+    environment: Environment,
     options$: Observable<Options>,
     onError?: () => void,
   |}) {
@@ -70,6 +76,7 @@ export default class RPCServer {
     this._createProfile = createProfile;
     this._blockchain$ = blockchain$;
     this._node$ = node$;
+    this._environment = environment;
     this._options$ = options$;
     this._shutdownFuncs = [];
     this._onError = onError || (() => {});
@@ -91,39 +98,25 @@ export default class RPCServer {
   }
 
   async _startHTTPServer(app$: Observable<Koa>): Promise<void> {
-    const options = await this._options$.take(1).toPromise();
-    const httpOptions = options.server.http;
+    const httpOptions = this._environment.http;
     if (httpOptions == null) {
       return;
     }
 
     const { host, port } = httpOptions;
     const httpServer = http.createServer();
-    await this._setupServer(
-      httpServer,
-      options.server.keepAliveTimeout,
-      host,
-      port,
-      app$,
-    );
+    await this._setupServer(httpServer, host, port, app$);
   }
 
   async _startHTTPSServer(app$: Observable<Koa>): Promise<void> {
-    const options = await this._options$.take(1).toPromise();
-    const httpsOptions = options.server.https;
+    const httpsOptions = this._environment.https;
     if (httpsOptions == null) {
       return;
     }
 
     const { key, cert, host, port } = httpsOptions;
     const httpsServer = https.createServer({ key, cert });
-    await this._setupServer(
-      httpsServer,
-      options.server.keepAliveTimeout,
-      host,
-      port,
-      app$,
-    );
+    await this._setupServer(httpsServer, host, port, app$);
   }
 
   _getApp$(): Observable<Koa> {
@@ -164,11 +157,14 @@ export default class RPCServer {
 
   async _setupServer(
     server: http.Server | https.Server,
-    keepAliveTimeout: number,
     host: string,
     port: number,
     app$: Observable<Koa>,
   ): Promise<void> {
+    const onError = event => error => {
+      this._log({ event, error });
+      this.stop().then(() => this._onError());
+    };
     let listener;
     const subscription = app$.subscribe({
       next: app => {
@@ -179,14 +175,21 @@ export default class RPCServer {
         listener = app.callback();
         server.on('request', listener);
       },
-      error: error => {
-        this._log({ event: 'SERVER_APP_SUBSCRIBE_ERROR', error });
-        this.stop().then(() => this._onError());
-      },
+      error: (onError('SERVER_APP_SUBSCRIBE_ERROR'): $FlowFixMe),
     });
     this._shutdownFuncs.push(() => subscription.unsubscribe());
-    // $FlowFixMe
-    server.keepAliveTimeout = keepAliveTimeout; // eslint-disable-line
+
+    const keepAliveSubscription = this._options$
+      .map(options => options.server.keepAliveTimeout)
+      .distinct()
+      .subscribe({
+        next: keepAliveTimeout => {
+          // $FlowFixMe
+          server.keepAliveTimeout = keepAliveTimeout; // eslint-disable-line
+        },
+        error: (onError('SERVER_KEEP_ALIVE_SUBSCRIBE_ERROR'): $FlowFixMe),
+      });
+    this._shutdownFuncs.push(() => keepAliveSubscription.unsubscribe());
 
     await new Promise(resolve =>
       server.listen(port, host, 511, () => resolve()),

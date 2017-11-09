@@ -11,6 +11,7 @@ import { type Settings } from 'neo-blockchain-core';
 import {
   type CreateLogForContext,
   type CreateProfile,
+  type RPCServerEnvironment,
   type RPCServerOptions,
   RPCServer,
 } from 'neo-blockchain-rpc';
@@ -23,7 +24,11 @@ import vm from 'neo-blockchain-vm';
 
 export type NodeOptions = {|
   seeds: Array<Endpoint>,
+|};
+
+export type Environment = {|
   dataPath: string,
+  rpc: RPCServerEnvironment,
 |};
 
 export type Options = {|
@@ -41,6 +46,7 @@ export default class FullNode {
   _createLogForContext: CreateLogForContext;
   _createProfile: CreateProfile;
   _settings: Settings;
+  _environment: Environment;
   _options$: Observable<Options>;
   _onError: () => void;
   _onCreateBlockchain: (blockchain: BlockchainType) => Promise<void>;
@@ -52,6 +58,7 @@ export default class FullNode {
     createLogForContext,
     createProfile,
     settings,
+    environment,
     options$,
     onError,
     onCreateBlockchain,
@@ -60,6 +67,7 @@ export default class FullNode {
     createLogForContext: CreateLogForContext,
     createProfile: CreateProfile,
     settings: Settings,
+    environment: Environment,
     options$: Observable<Options>,
     onError?: () => void,
     onCreateBlockchain?: (blockchain: BlockchainType) => Promise<void>,
@@ -68,6 +76,7 @@ export default class FullNode {
     this._createLogForContext = createLogForContext;
     this._createProfile = createProfile;
     this._settings = settings;
+    this._environment = environment;
     this._options$ = options$;
     this._onError = onError || (() => {});
     this._onCreateBlockchain =
@@ -108,7 +117,7 @@ export default class FullNode {
             }
 
             const storage = levelUpStorage({
-              db: levelup(leveldown(options.dataPath)),
+              db: levelup(leveldown(this._environment.dataPath)),
               context: { messageMagic: this._settings.messageMagic },
             });
             const blockchain = await Blockchain.create({
@@ -144,6 +153,7 @@ export default class FullNode {
       createProfile: this._createProfile,
       blockchain$: nodeAndBlockchain$.map(({ blockchain }) => blockchain),
       node$: nodeAndBlockchain$.map(({ node }) => node),
+      environment: this._environment.rpc,
       options$: this._options$.map(options => options.rpc).distinct(),
       onError: this._onError,
     });
