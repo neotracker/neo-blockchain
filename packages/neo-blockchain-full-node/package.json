@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-full-node",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "keywords": [
     "neo",
     "blockchain"
@@ -17,7 +17,7 @@
     "neo-blockchain-core": "^0.0.43",
     "neo-blockchain-impl": "^0.0.45",
     "neo-blockchain-levelup": "^0.0.45",
-    "neo-blockchain-node": "^0.0.45",
+    "neo-blockchain-node": "^0.0.50",
     "neo-blockchain-node-core": "^0.0.45",
     "neo-blockchain-rpc": "^0.0.48",
     "neo-blockchain-vm": "^0.0.45",
