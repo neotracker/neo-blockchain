@@ -373,12 +373,29 @@ export default class Node implements INode {
     const block = this._blockchain.currentBlock;
     if (peer != null && block.index < peer.data.startHeight) {
       if (this._getBlocksRequestsCount > GET_BLOCKS_CLOSE_COUNT) {
+        this._blockchain.log({
+          event: 'REQUEST_BLOCKS_CLOSE_PEER',
+          level: 'debug',
+          peer: peer.endpoint,
+        });
         peer.close();
         this._getBlocksRequestsCount = 0;
       } else if (this._shouldRequestBlocks()) {
         if (this._getBlocksRequestsIndex === block.index) {
+          this._blockchain.log({
+            event: 'REQUEST_BLOCKS_REPEAT_REQUEST',
+            level: 'debug',
+            peer: peer.endpoint,
+            index: block.index,
+          });
           this._getBlocksRequestsCount += 1;
         } else {
+          this._blockchain.log({
+            event: 'REQUEST_BLOCKS_INITIAL_REQUEST',
+            level: 'debug',
+            peer: peer.endpoint,
+            index: block.index,
+          });
           this._getBlocksRequestsCount = 1;
           this._getBlocksRequestsIndex = block.index;
         }
@@ -392,6 +409,13 @@ export default class Node implements INode {
             }),
           }),
         );
+      } else {
+        this._blockchain.log({
+          event: 'REQUEST_BLOCKS_SKIP_REQUEST',
+          level: 'debug',
+          peer: peer.endpoint,
+          index: block.index,
+        });
       }
 
       this._requestBlocks();

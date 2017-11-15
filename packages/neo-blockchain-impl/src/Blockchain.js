@@ -351,9 +351,7 @@ export default class Blockchain {
       });
     } finally {
       this._persistingBlocks = false;
-      if (this._doneRunningResolve == null) {
-        this._persistBlocksAsync();
-      } else {
+      if (this._doneRunningResolve != null) {
         this._doneRunningResolve();
         this._doneRunningResolve = null;
       }
