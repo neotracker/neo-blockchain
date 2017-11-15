@@ -549,6 +549,11 @@ export default class Node implements INode {
   }
 
   async _onBlockMessageReceived(block: Block): Promise<void> {
+    this._blockchain.log({
+      event: 'BLOCK_RECEIVED',
+      level: 'debug',
+      index: block.index,
+    });
     if (
       this._blockchain.currentBlockIndex >= block.index ||
       this._tempKnownBlockHashes.has(block.hashHex)
@@ -564,6 +569,11 @@ export default class Node implements INode {
           hashOrIndex: block.hash,
         });
         if (foundBlock == null) {
+          this._blockchain.log({
+            event: 'NODE_PERSIST_BLOCK',
+            level: 'debug',
+            index: block.index,
+          });
           await this._blockchain.persistBlock({ block });
 
           const peer = this._bestPeer;
@@ -892,10 +902,9 @@ export default class Node implements INode {
     }
 
     const headers = await Promise.all(
-      _.range(
-        hashStart,
-        Math.min(hashStart + GET_BLOCKS_COUNT, hashEnd),
-      ).map(index => this._blockchain.header.get({ hashOrIndex: index })),
+      _.range(hashStart, Math.min(hashStart + GET_BLOCKS_COUNT, hashEnd)).map(
+        index => this._blockchain.header.get({ hashOrIndex: index }),
+      ),
     );
 
     return headers;
