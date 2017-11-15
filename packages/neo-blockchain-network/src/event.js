@@ -32,25 +32,28 @@ export type EventMessage<Message, PeerData> =
   | {|
       event: 'PEER_CONNECT_START',
       message: string,
+      data: {| peer: string |},
     |}
   | {|
       event: 'PEER_CONNECT_ERROR',
       message: string,
-      data: {| error?: Error |},
+      data: {| error?: Error, peer: string |},
     |}
   | {|
       event: 'PEER_CONNECT_SUCCESS',
       message: string,
+      data: {| peer: string |},
       extra: {| connectedPeer: ConnectedPeer<Message, PeerData> |},
     |}
   | {|
       event: 'PEER_ERROR',
       message: string,
-      data: {| error?: Error |},
+      data: {| error?: Error, peer: string |},
     |}
   | {|
       event: 'PEER_CLOSED',
       message: string,
+      data: {| peer: string |},
       extra: {| peer: Peer<Message> | ConnectedPeer<Message, PeerData> |},
     |};
 

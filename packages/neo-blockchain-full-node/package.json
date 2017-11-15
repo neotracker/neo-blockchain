@@ -12,8 +12,8 @@
   "main": "./dist/index.js",
   "module": "./dist/es.js",
   "dependencies": {
-    "leveldown": "^2.0.0",
-    "levelup": "^2.0.0-rc3",
+    "leveldown": "^2.0.1",
+    "levelup": "^2.0.1",
     "neo-blockchain-core": "^0.0.43",
     "neo-blockchain-impl": "^0.0.45",
     "neo-blockchain-levelup": "^0.0.45",

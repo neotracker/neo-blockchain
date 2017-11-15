@@ -282,6 +282,7 @@ export default class Network<Message, PeerData> {
     this.__onEvent({
       event: 'PEER_CONNECT_START',
       message: `Connecting to peer at ${endpoint}`,
+      data: { peer: endpoint },
     });
     try {
       const endpointConfig = getEndpointConfig(endpoint);
@@ -294,7 +295,7 @@ export default class Network<Message, PeerData> {
       this.__onEvent({
         event: 'PEER_CONNECT_ERROR',
         message: `Failed to connect to peer at ${endpoint}: ${error.message}`,
-        data: { error },
+        data: { error, peer: endpoint },
       });
     } finally {
       delete this._connectingPeers[endpoint];
@@ -333,6 +334,7 @@ export default class Network<Message, PeerData> {
       this.__onEvent({
         event: 'PEER_CONNECT_SUCCESS',
         message: `Connected to peer at ${peer.endpoint}`,
+        data: { peer: peer.endpoint },
         extra: { connectedPeer },
       });
     }
@@ -353,8 +355,10 @@ export default class Network<Message, PeerData> {
     peer.close();
     this.__onEvent({
       event: 'PEER_ERROR',
-      message: `Encountered error with peer at ${peer.endpoint}: ${error.message}`,
-      data: { error },
+      message: `Encountered error with peer at ${peer.endpoint}: ${
+        error.message
+      }`,
+      data: { error, peer: peer.endpoint },
     });
   }
 
@@ -366,6 +370,7 @@ export default class Network<Message, PeerData> {
     this.__onEvent({
       event: 'PEER_CLOSED',
       message: `Peer at ${peer.endpoint} closed.`,
+      data: { peer: peer.endpoint },
       extra: { peer: connectedPeer || peer },
     });
   }
