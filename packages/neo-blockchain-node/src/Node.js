@@ -349,7 +349,10 @@ export default class Node implements INode {
         this._requestBlocks();
       }
     } else if (event.event === 'PEER_CLOSED') {
-      if (this._bestPeer === event.extra.peer) {
+      if (
+        this._bestPeer != null &&
+        this._bestPeer.endpoint === event.extra.peer.endpoint
+      ) {
         this._bestPeer = this._findBestPeer();
         this._requestBlocks();
       }
@@ -365,38 +368,35 @@ export default class Node implements INode {
     return _.maxBy(this._network.connectedPeers, peer => peer.data.startHeight);
   }
 
-  _requestBlocks = _.throttle(
-    _.debounce(() => {
-      const peer = this._bestPeer;
-      const block = this._blockchain.currentBlock;
-      if (peer != null && block.index < peer.data.startHeight) {
-        if (this._getBlocksRequestsCount > GET_BLOCKS_CLOSE_COUNT) {
-          peer.close();
-          this._getBlocksRequestsCount = 0;
-        } else if (this._shouldRequestBlocks()) {
-          if (this._getBlocksRequestsIndex === block.index) {
-            this._getBlocksRequestsCount += 1;
-          } else {
-            this._getBlocksRequestsCount = 1;
-            this._getBlocksRequestsIndex = block.index;
-          }
-          this._getBlocksRequestTime = Date.now();
-          this._sendMessage(
-            peer,
-            this._createMessage({
-              command: COMMAND.GET_BLOCKS,
-              payload: new GetBlocksPayload({
-                hashStart: [block.hash],
-              }),
-            }),
-          );
+  _requestBlocks = _.debounce(() => {
+    const peer = this._bestPeer;
+    const block = this._blockchain.currentBlock;
+    if (peer != null && block.index < peer.data.startHeight) {
+      if (this._getBlocksRequestsCount > GET_BLOCKS_CLOSE_COUNT) {
+        peer.close();
+        this._getBlocksRequestsCount = 0;
+      } else if (this._shouldRequestBlocks()) {
+        if (this._getBlocksRequestsIndex === block.index) {
+          this._getBlocksRequestsCount += 1;
+        } else {
+          this._getBlocksRequestsCount = 1;
+          this._getBlocksRequestsIndex = block.index;
         }
-
-        this._requestBlocks();
+        this._getBlocksRequestTime = Date.now();
+        this._sendMessage(
+          peer,
+          this._createMessage({
+            command: COMMAND.GET_BLOCKS,
+            payload: new GetBlocksPayload({
+              hashStart: [block.hash],
+            }),
+          }),
+        );
       }
-    }, GET_BLOCKS_THROTTLE_MS),
-    GET_BLOCKS_THROTTLE_MS,
-  );
+
+      this._requestBlocks();
+    }
+  }, GET_BLOCKS_THROTTLE_MS);
 
   _shouldRequestBlocks(): boolean {
     const block = this._blockchain.currentBlock;
