@@ -57,6 +57,6 @@ export default class TCPPeer<Message> extends Peer<Message> {
   }
 
   _close(): void {
-    this._socket.end();
+    this._socket.destroy();
   }
 }
