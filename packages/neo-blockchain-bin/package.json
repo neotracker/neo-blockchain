@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-bin",
-  "version": "0.0.50",
+  "version": "0.0.51",
   "keywords": [
     "neo",
     "blockchain"
@@ -20,7 +20,7 @@
     "lodash": "^4.17.4",
     "neo-blockchain-client": "^0.0.48",
     "neo-blockchain-core": "^0.0.43",
-    "neo-blockchain-full-node": "^0.0.50",
+    "neo-blockchain-full-node": "^0.0.51",
     "neo-blockchain-neo-settings": "^0.0.43",
     "neo-blockchain-node-core": "^0.0.45",
     "neo-blockchain-offline": "^0.0.45",
