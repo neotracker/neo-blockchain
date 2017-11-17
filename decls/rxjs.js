@@ -39,6 +39,21 @@ type rxjs$EventListenerOptions = {
   once?: boolean;
 } | boolean;
 
+interface rxjs$Subscribable<T> {
+  subscribe(observerOrNext?: rxjs$PartialObserver<T> | ((value: T) => void),
+            error?: (error: any) => void,
+            complete?: () => void): rxjs$ISubscription;
+}
+
+
+type rxjs$UnaryFunction<T, R> = (source: T) => R;
+type rxjs$OperatorFunction<T, R> = rxjs$UnaryFunction<rxjs$Observable<T>, rxjs$Observable<R>>;
+type rxjs$FactoryOrValue<T> = T | (() => T);
+type rxjs$MonoTypeOperatorFunction<T> = rxjs$OperatorFunction<T, T>;
+
+type rxjs$SubscribableOrPromise<T> = rxjs$Subscribable<T> | Promise<T>;
+type rxjs$ObservableInput<T> = rxjs$SubscribableOrPromise<T> | Array<T>;
+
 declare class rxjs$Observable<+T> {
   static bindCallback(callbackFunc: (callback: (_: void) => any) => any, selector?: void, scheduler?: rxjs$SchedulerClass): () => rxjs$Observable<void>;
   static bindCallback<U>(callbackFunc: (callback: (result: U) => any) => any, selector?: void, scheduler?: rxjs$SchedulerClass): () => rxjs$Observable<U>;
@@ -700,6 +715,18 @@ declare class rxjs$Observable<+T> {
   _isScalar: boolean;
   source: ?rxjs$Observable<any>;
   operator: ?rxjs$Operator<any, any>;
+
+  pipe(): rxjs$Observable<T>;
+  pipe<A>(op1: rxjs$OperatorFunction<T, A>): rxjs$Observable<A>;
+  pipe<A, B>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>): rxjs$Observable<B>;
+  pipe<A, B, C>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>): rxjs$Observable<C>;
+  pipe<A, B, C, D>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>, op4: rxjs$OperatorFunction<C, D>): rxjs$Observable<D>;
+  pipe<A, B, C, D, E>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>, op4: rxjs$OperatorFunction<C, D>, op5: rxjs$OperatorFunction<D, E>): rxjs$Observable<E>;
+  pipe<A, B, C, D, E, F>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>, op4: rxjs$OperatorFunction<C, D>, op5: rxjs$OperatorFunction<D, E>, op6: rxjs$OperatorFunction<E, F>): rxjs$Observable<F>;
+  pipe<A, B, C, D, E, F, G>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>, op4: rxjs$OperatorFunction<C, D>, op5: rxjs$OperatorFunction<D, E>, op6: rxjs$OperatorFunction<E, F>, op7: rxjs$OperatorFunction<F, G>): rxjs$Observable<G>;
+  pipe<A, B, C, D, E, F, G, H>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>, op4: rxjs$OperatorFunction<C, D>, op5: rxjs$OperatorFunction<D, E>, op6: rxjs$OperatorFunction<E, F>, op7: rxjs$OperatorFunction<F, G>, op8: rxjs$OperatorFunction<G, H>): rxjs$Observable<H>;
+  pipe<A, B, C, D, E, F, G, H, I>(op1: rxjs$OperatorFunction<T, A>, op2: rxjs$OperatorFunction<A, B>, op3: rxjs$OperatorFunction<B, C>, op4: rxjs$OperatorFunction<C, D>, op5: rxjs$OperatorFunction<D, E>, op6: rxjs$OperatorFunction<E, F>, op7: rxjs$OperatorFunction<F, G>, op8: rxjs$OperatorFunction<G, H>, op9: rxjs$OperatorFunction<H, I>): rxjs$Observable<I>;
+
 }
 
 declare class rxjs$ConnectableObservable<T> extends rxjs$Observable<T> {
@@ -806,6 +833,151 @@ declare module 'rxjs' {
     Subscription: typeof rxjs$Subscription,
     TimeoutError: typeof rxjs$TimeoutError,
   }
+}
+
+declare module 'rxjs/operators' {
+  declare export function concatMap<T, R>(project: (value: T, index: number) => rxjs$ObservableInput<R>): rxjs$OperatorFunction<T, R>;
+  declare export function map<T, U>(f: (value: T) => U): rxjs$OperatorFunction<T, U>;
+  declare export function mergeScan<T, R>(
+    accumulator: (acc: R, value: T) => rxjs$Observable<R>,
+    seed: R,
+    concurrent?: number
+  ): rxjs$OperatorFunction<T, R>;
+  declare export function distinct<T, U>(keySelector?: (value: T) => U, flushes?: rxjs$Observable<mixed>): rxjs$MonoTypeOperatorFunction<T>;
+  declare export function refCount<T>(): rxjs$MonoTypeOperatorFunction<T>;
+  declare export function take<T>(count: number): rxjs$MonoTypeOperatorFunction<T>;
+  declare export function publishReplay<T, R>(bufferSize?: number, windowTime?: number, selector?: rxjs$OperatorFunction<T, R>, scheduler?: rxjs$SchedulerClass): rxjs$OperatorFunction<T, R>;
+}
+
+declare module 'rxjs/observable/combineLatest' {
+  declare export function combineLatest<A, B>(
+    a: rxjs$Observable<A>,
+    resultSelector: (a: A) => B,
+  ): rxjs$Observable<B>;
+
+  declare export function combineLatest<A, B, C>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    resultSelector: (a: A, b: B) => C,
+  ): rxjs$Observable<C>;
+
+  declare export function combineLatest<A, B, C, D>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    resultSelector: (a: A, b: B, c: C) => D,
+  ): rxjs$Observable<D>;
+
+  declare export function combineLatest<A, B, C, D, E>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    resultSelector: (a: A, b: B, c: C, d: D) => E,
+  ): rxjs$Observable<E>;
+
+  declare export function combineLatest<A, B, C, D, E, F>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    resultSelector: (a: A, b: B, c: C, d: D, e: E) => F,
+  ): rxjs$Observable<F>;
+
+  declare export function combineLatest<A, B, C, D, E, F, G>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    f: rxjs$Observable<F>,
+    resultSelector: (a: A, b: B, c: C, d: D, e: E, f: F) => G,
+  ): rxjs$Observable<G>;
+
+  declare export function combineLatest<A, B, C, D, E, F, G, H>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    f: rxjs$Observable<F>,
+    g: rxjs$Observable<G>,
+    resultSelector: (a: A, b: B, c: C, d: D, e: E, f: F, g: G) => H,
+  ): rxjs$Observable<H>;
+
+  declare export function combineLatest<A, B>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    _: void,
+  ): rxjs$Observable<[A, B]>;
+
+  declare export function combineLatest<A, B, C>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    _: void,
+  ): rxjs$Observable<[A, B, C]>;
+
+  declare export function combineLatest<A, B, C, D>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    _: void,
+  ): rxjs$Observable<[A, B, C, D]>;
+
+  declare export function combineLatest<A, B, C, D, E>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    _: void,
+  ): rxjs$Observable<[A, B, C, D, E]>;
+
+  declare export function combineLatest<A, B, C, D, E, F>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    f: rxjs$Observable<F>,
+    _: void,
+  ): rxjs$Observable<[A, B, C, D, E, F]>;
+
+  declare export function combineLatest<A, B, C, D, E, F, G>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    f: rxjs$Observable<F>,
+    g: rxjs$Observable<G>,
+    _: void,
+  ): rxjs$Observable<[A, B, C, D, E, F, G]>;
+
+  declare export function combineLatest<A, B, C, D, E, F, G, H>(
+    a: rxjs$Observable<A>,
+    b: rxjs$Observable<B>,
+    c: rxjs$Observable<C>,
+    d: rxjs$Observable<D>,
+    e: rxjs$Observable<E>,
+    f: rxjs$Observable<F>,
+    g: rxjs$Observable<G>,
+    h: rxjs$Observable<H>,
+    _: void,
+  ): rxjs$Observable<[A, B, C, D, E, F, G, H]>;
+
+  declare export default typeof combineLatest;
+}
+
+declare module 'rxjs/observable/defer' {
+  declare export function defer<T>(observableFactory: () => rxjs$Observable<T> | Promise<T>): rxjs$Observable<T>;
+}
+
+declare module 'rxjs/observable/fromPromise' {
+  declare export function fromPromise<T>(promise: Promise<T>): rxjs$Observable<T>;
 }
 
 declare module 'rxjs/Observable' {

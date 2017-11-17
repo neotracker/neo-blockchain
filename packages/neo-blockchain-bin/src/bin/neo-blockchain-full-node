@@ -1,9 +1,9 @@
 #! /usr/bin/env node
 /* @flow */
 import 'babel-polyfill';
-import type { FullNode } from 'neo-blockchain-full-node';
 
 import program from 'commander';
+import { take } from 'rxjs/operators';
 
 import {
   createFullNode,
@@ -29,14 +29,18 @@ const getOptions = (options: Object): Options => ({
   },
 });
 
-const createFullNodeFromCLI = async (optionsIn: Object): Promise<FullNode> => {
+const createFullNodeFromCLI = (
+  optionsIn: Object,
+  dumpPath?: string,
+): Observable<any> => {
   const options = getOptions(optionsIn);
-  const node = await createFullNode({
+  const node = createFullNode({
     testNet: options.test,
     dataPath: options.data,
     chain: options.chain,
+    dumpPath,
   });
-  shutdownFuncs.push(() => node.stop());
+  console.log(node);
   return node;
 };
 
@@ -52,9 +56,12 @@ program
     'Dump a chain.acc file that can be used to quickly reload a node.'
   )
   .action(async (outpath, options) => {
-    const node = await createFullNodeFromCLI(options.parent);
+    const node$ = await createFullNodeFromCLI(
+      options.parent,
+      resolveHome(outpath),
+    );
     log({ event: 'DUMP_CHAIN' });
-    await node.dump(resolveHome(outpath));
+    await node$.pipe(take(1)).toPromise();
     log({ event: 'DUMP_CHAIN_SUCCESS' })
     shutdown({ exitCode: 0 });
   });
@@ -63,8 +70,9 @@ program
   .command('start')
   .description('Start the full node')
   .action(async (options) => {
-    const node = await createFullNodeFromCLI(options.parent);
-    await node.start();
+    const node$ = createFullNodeFromCLI(options.parent);
+    const subscription = node$.subscribe();
+    shutdownFuncs.push(() => subscription.unsubscribe());
   })
 
 program.parse(process.argv);

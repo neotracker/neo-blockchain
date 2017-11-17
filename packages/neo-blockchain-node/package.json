@@ -18,6 +18,7 @@
     "lodash": "^4.17.4",
     "neo-blockchain-core": "^0.0.43",
     "neo-blockchain-network": "^0.0.55",
-    "neo-blockchain-node-core": "^0.0.45"
+    "neo-blockchain-node-core": "^0.0.45",
+    "rxjs": "^5.5.2"
   }
 }

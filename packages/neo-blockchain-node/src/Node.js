@@ -27,6 +27,7 @@ import {
   getEndpointConfig,
 } from 'neo-blockchain-node-core';
 import BloomFilter from 'bloom-filter';
+import type { Observable } from 'rxjs/Observable';
 import { ScalingBloem } from 'bloem';
 
 import _ from 'lodash';
@@ -55,7 +56,7 @@ import pkg from '../package.json';
 
 type NodeOptions = {|
   blockchain: Blockchain,
-  seeds: Array<Endpoint>,
+  seeds$: Observable<Array<Endpoint>>,
   listenTCP?: ListenTCP,
   externalEndpoints?: Array<Endpoint>,
   connectPeersDelayMS?: number,
@@ -121,7 +122,7 @@ export default class Node implements INode {
   constructor(options: NodeOptions) {
     this._blockchain = options.blockchain;
     this._network = new Network({
-      seeds: options.seeds,
+      seeds$: options.seeds$,
       listenTCP: options.listenTCP,
       externalEndpoints: options.externalEndpoints,
       connectPeersDelayMS: options.connectPeersDelayMS,

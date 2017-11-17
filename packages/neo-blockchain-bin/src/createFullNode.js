@@ -5,7 +5,7 @@ import {
   createProfile,
 } from 'neo-blockchain-node-core';
 import { type Chain, loadChain, dumpChain } from 'neo-blockchain-offline';
-import FullNode from 'neo-blockchain-full-node';
+import fullNode$ from 'neo-blockchain-full-node';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import { main, test } from 'neo-blockchain-neo-settings';
@@ -14,7 +14,7 @@ import { createLogger, transports as winstonTransports } from 'winston';
 import createServerLogger from './createServerLogger';
 import resolveHome from './resolveHome';
 
-export default async ({
+export default ({
   testNet,
   dataPath: dataPathIn,
   chain: chainIn,
@@ -134,7 +134,7 @@ export default async ({
 
   const subject = new ReplaySubject(1);
   subject.next(options);
-  const node = new FullNode({
+  return fullNode$({
     log,
     createLogForContext: () => log,
     createProfile,
@@ -144,10 +144,6 @@ export default async ({
       rpc: rpcEnvironment,
     },
     options$: subject,
-    onError: () => {
-      subject.complete();
-    },
     onCreateBlockchain,
   });
-  return node;
 };

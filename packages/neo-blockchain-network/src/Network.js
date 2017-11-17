@@ -5,8 +5,10 @@ import {
   createEndpoint,
   getEndpointConfig,
 } from 'neo-blockchain-node-core';
+import type { Observable } from 'rxjs/Observable';
 
 import net from 'net';
+import { take } from 'rxjs/operators';
 import { utils } from 'neo-blockchain-core';
 
 import ConnectedPeer from './ConnectedPeer';
@@ -26,7 +28,7 @@ export type NegotiateResult<PeerData> = {|
 |};
 
 type NetworkOptions<Message, PeerData> = {|
-  seeds: Array<Endpoint>,
+  seeds$: Observable<Array<Endpoint>>,
   listenTCP?: ListenTCP,
   externalEndpoints?: Array<Endpoint>,
   connectPeersDelayMS?: number,
@@ -51,7 +53,7 @@ export default class Network<Message, PeerData> {
   _externalEndpoints: Set<Endpoint>;
   _connectPeersDelayMS: number;
   _maxConnectedPeers: number;
-  _seeds: Array<Endpoint>;
+  _seeds$: Observable<Array<Endpoint>>;
   _socketTimeoutMS: number;
 
   _connectedPeers: { [endpoint: Endpoint]: ConnectedPeer<Message, PeerData> };
@@ -79,7 +81,7 @@ export default class Network<Message, PeerData> {
     this._externalEndpoints = new Set(options.externalEndpoints || []);
     this._connectPeersDelayMS = options.connectPeersDelayMS || 1000;
     this._maxConnectedPeers = options.maxConnectedPeers || 10;
-    this._seeds = options.seeds;
+    this._seeds$ = options.seeds$;
     this._socketTimeoutMS = options.socketTimeoutMS || 1000 * 60;
 
     this._connectedPeers = {};
@@ -96,10 +98,6 @@ export default class Network<Message, PeerData> {
     this.__onMessageReceived = options.onMessageReceived;
     this.__onRequestEndpoints = options.onRequestEndpoints;
     this.__onEvent = options.onEvent || emptyFunction;
-
-    if (this._seeds.length === 0) {
-      throw new Error('Must have at least one seed.');
-    }
 
     // $FlowFixMe
     this._onError = this._onError.bind(this);
@@ -256,7 +254,8 @@ export default class Network<Message, PeerData> {
         this.__onRequestEndpoints();
       }
 
-      endpoints.push(...this._seeds);
+      const seeds = await this._seeds$.pipe(take(1)).toPromise();
+      endpoints.push(...seeds);
 
       await Promise.all(
         endpoints.map(endpoint => this._connectToPeer({ endpoint })),

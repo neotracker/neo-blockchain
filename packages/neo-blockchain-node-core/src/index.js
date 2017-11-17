@@ -1,6 +1,8 @@
 /* @flow */
 export { default as BlockSystemFee } from './BlockSystemFee';
 export { default as TransactionSpentCoins } from './TransactionSpentCoins';
+export { default as finalize } from './finalize';
+export { default as neverComplete } from './neverComplete';
 
 export { createProfile } from './log';
 export { createEndpoint, getEndpointConfig } from './Network';
