@@ -88,6 +88,7 @@ export default ({
             'http://seed5.neo.org:20332',
           ],
           offset: 1,
+          timeoutMS: 5000,
         },
       },
     };
@@ -127,6 +128,7 @@ export default ({
             'http://seed5.neo.org:10332',
           ],
           offset: 1,
+          timeoutMS: 5000,
         },
       },
     };

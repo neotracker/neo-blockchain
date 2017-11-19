@@ -3,13 +3,15 @@ import type { Blockchain } from 'neo-blockchain-node-core';
 import type { Context } from 'koa';
 
 import _ from 'lodash';
+import fetch from 'node-fetch';
 import mount from 'koa-mount';
 
 import { getLog, simpleMiddleware } from './common';
 
-const TIMEOUT_MS = 5000;
-
-const fetchCount = async (endpoint: string): Promise<?number> => {
+const fetchCount = async (
+  endpoint: string,
+  timeoutMS: number,
+): Promise<?number> => {
   try {
     // eslint-disable-next-line
     const response = await fetch(endpoint, {
@@ -25,7 +27,7 @@ const fetchCount = async (endpoint: string): Promise<?number> => {
           id: 4,
         },
       ]),
-      timeout: TIMEOUT_MS,
+      timeout: timeoutMS,
     });
     if (!response.ok) {
       return null;
@@ -48,9 +50,10 @@ const fetchCount = async (endpoint: string): Promise<?number> => {
 
 const fetchTallestBlockIndex = async (
   rpcEndpoints: Array<string>,
+  timeoutMS: number,
 ): Promise<?number> => {
   const counts = await Promise.all(
-    rpcEndpoints.map(rpcEndpoint => fetchCount(rpcEndpoint)),
+    rpcEndpoints.map(rpcEndpoint => fetchCount(rpcEndpoint, timeoutMS)),
   );
   return _.max(counts.filter(Boolean).map(count => count - 1));
 };
@@ -58,6 +61,7 @@ const fetchTallestBlockIndex = async (
 export type Options = {|
   rpcEndpoints: Array<string>,
   offset: number,
+  timeoutMS: number,
 |};
 
 export default ({
@@ -71,9 +75,12 @@ export default ({
     'readyHealthCheck',
     mount('/ready_health_check', async (ctx: Context) => {
       const log = getLog(ctx);
-      const index = await fetchTallestBlockIndex(options.rpcEndpoints);
+      const index = await fetchTallestBlockIndex(
+        options.rpcEndpoints,
+        options.timeoutMS,
+      );
       if (
-        index == null ||
+        index != null &&
         blockchain.currentBlockIndex >= index - options.offset
       ) {
         ctx.status = 200;
