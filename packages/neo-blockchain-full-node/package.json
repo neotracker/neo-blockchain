@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-full-node",
-  "version": "0.0.56",
+  "version": "0.0.57",
   "keywords": [
     "neo",
     "blockchain"
@@ -19,7 +19,7 @@
     "neo-blockchain-levelup": "^0.0.56",
     "neo-blockchain-node": "^0.0.56",
     "neo-blockchain-node-core": "^0.0.56",
-    "neo-blockchain-rpc": "^0.0.56",
+    "neo-blockchain-rpc": "^0.0.57",
     "neo-blockchain-vm": "^0.0.56",
     "rxjs": "^5.5.2"
   }
