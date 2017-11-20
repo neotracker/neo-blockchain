@@ -60,6 +60,7 @@ import _ from 'lodash';
 
 import {
   BlockLikeStorageCache,
+  OutputStorageCache,
   ReadAddDeleteStorageCache,
   ReadAddUpdateStorageCache,
   ReadAddStorageCache,
@@ -96,7 +97,7 @@ type Caches = {|
     TransactionSpentCoins,
     TransactionSpentCoinsUpdate,
   >,
-  output: $PropertyType<WriteBlockchain, 'output'>,
+  output: OutputStorageCache,
   contract: ReadAddDeleteStorageCache<ContractKey, Contract>,
   storageItem: ReadGetAllAddUpdateDeleteStorageCache<
     StorageItemKey,
@@ -139,7 +140,7 @@ export default class WriteBatchBlockchain {
     TransactionSpentCoins,
     TransactionSpentCoinsUpdate,
   >;
-  output: $PropertyType<WriteBlockchain, 'output'>;
+  output: OutputStorageCache;
   contract: ReadAddDeleteStorageCache<ContractKey, Contract>;
   storageItem: ReadGetAllAddUpdateDeleteStorageCache<
     StorageItemKey,
@@ -158,6 +159,7 @@ export default class WriteBatchBlockchain {
     this._vm = options.vm;
     this._onStep = options.onStep;
 
+    const output = new OutputStorageCache(this._storage.output);
     this._caches = {
       account: new ReadAllAddUpdateDeleteStorageCache({
         name: 'account',
@@ -222,6 +224,13 @@ export default class WriteBatchBlockchain {
         getKeyFromValue: value => ({ hash: value.hash }),
         getKeyString: key => common.uInt256ToString(key.hash),
         createAddChange: value => ({ type: 'transaction', value }),
+        onAdd: async value => {
+          await Promise.all(
+            value.outputs.map((out, index) =>
+              output.add({ hash: value.hash, index, output: out }),
+            ),
+          );
+        },
       }),
       transactionSpentCoins: new ReadAddUpdateStorageCache({
         name: 'transactionSpentCoins',
@@ -231,7 +240,7 @@ export default class WriteBatchBlockchain {
         getKeyString: key => common.uInt256ToString(key.hash),
         createAddChange: value => ({ type: 'transactionSpentCoins', value }),
       }),
-      output: this._storage.output,
+      output,
       contract: new ReadAddDeleteStorageCache({
         name: 'contract',
         readStorage: this._storage.contract,
@@ -315,6 +324,7 @@ export default class WriteBatchBlockchain {
       .concat(this.blockSystemFee.getChangeSet())
       .concat(this.header.getChangeSet())
       .concat(this.transaction.getChangeSet())
+      .concat(this.output.getChangeSet())
       .concat(this.transactionSpentCoins.getChangeSet())
       .concat(this.contract.getChangeSet())
       .concat(this.storageItem.getChangeSet())

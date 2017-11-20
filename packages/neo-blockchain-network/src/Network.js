@@ -246,21 +246,20 @@ export default class Network<Message, PeerData> {
 
   async _connectToPeers(): Promise<void> {
     const connectedPeersCount = Object.keys(this._connectedPeers).length;
+    const endpoints = [];
     if (connectedPeersCount < this._maxConnectedPeers) {
       const count = this._maxConnectedPeers - connectedPeersCount;
-      const endpoints = [...this._unconnectedPeers].slice(0, count);
-
-      if (endpoints.length !== count) {
-        this.__onRequestEndpoints();
-      }
-
-      const seeds = await this._seeds$.pipe(take(1)).toPromise();
-      endpoints.push(...seeds);
-
-      await Promise.all(
-        endpoints.map(endpoint => this._connectToPeer({ endpoint })),
-      );
+      endpoints.push(...[...this._unconnectedPeers].slice(0, count));
     }
+
+    if (endpoints.length + connectedPeersCount < this._maxConnectedPeers) {
+      this.__onRequestEndpoints();
+    }
+
+    const seeds = await this._seeds$.pipe(take(1)).toPromise();
+    endpoints.push(...seeds);
+
+    endpoints.forEach(endpoint => this._connectToPeer({ endpoint }));
   }
 
   async _connectToPeer({

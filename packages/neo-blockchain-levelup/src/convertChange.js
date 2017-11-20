@@ -11,7 +11,8 @@ import { UnknownTypeError } from './errors';
 import * as common from './common';
 import * as keys from './keys';
 
-const convertAddChange = (change: AddChange): Array<LevelUpChange> => {
+const convertAddChange = (changeIn: AddChange): Array<LevelUpChange> => {
+  const change = changeIn;
   switch (change.type) {
     case 'account':
       return [
@@ -86,6 +87,17 @@ const convertAddChange = (change: AddChange): Array<LevelUpChange> => {
           type: 'put',
           key: keys.typeKeyToSerializeKey.transaction(change.value),
           value: change.value.serializeWire(),
+        },
+      ];
+    case 'output':
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.output({
+            hash: change.value.hash,
+            index: change.value.index,
+          }),
+          value: change.value.output.serializeWire(),
         },
       ];
     case 'transactionSpentCoins':

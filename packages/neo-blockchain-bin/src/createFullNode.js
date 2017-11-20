@@ -6,7 +6,7 @@ import {
 } from 'neo-blockchain-node-core';
 import { type Chain, loadChain, dumpChain } from 'neo-blockchain-offline';
 import fullNode$ from 'neo-blockchain-full-node';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { main, test } from 'neo-blockchain-neo-settings';
 import { createLogger, transports as winstonTransports } from 'winston';
@@ -134,8 +134,6 @@ export default ({
     };
   }
 
-  const subject = new ReplaySubject(1);
-  subject.next(options);
   return fullNode$({
     log,
     createLogForContext: () => log,
@@ -145,7 +143,7 @@ export default ({
       dataPath,
       rpc: rpcEnvironment,
     },
-    options$: subject,
+    options$: new BehaviorSubject(options),
     onCreateBlockchain,
   });
 };

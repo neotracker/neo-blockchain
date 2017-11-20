@@ -3,8 +3,6 @@ import {
   type BlockKey,
   type DeserializeWireContext,
   type HeaderKey,
-  type Output,
-  type OutputKey,
   type UInt256,
   Account,
   Asset,
@@ -12,6 +10,7 @@ import {
   Contract,
   Header,
   InvocationData,
+  Output,
   StorageItem,
   Validator,
   deserializeActionWire,
@@ -125,21 +124,13 @@ export default ({
       }),
   });
 
-  const getOutput = async ({ index, hash }: OutputKey): Promise<Output> => {
-    const tx = await transaction.get({ hash });
-    const output = tx.outputs[index];
-    if (output == null) {
-      throw new KeyNotFoundError(
-        keys.serializeOutputKeyString({ index, hash }),
-      );
-    }
-    return output;
-  };
-
-  const output = {
-    get: getOutput,
-    tryGet: read.createTryGet({ get: getOutput }),
-  };
+  const output = read.createReadStorage({
+    db,
+    serializeKey: keys.typeKeyToSerializeKey.output,
+    serializeKeyString: keys.typeKeyToSerializeKeyString.output,
+    deserializeValue: (buffer: Buffer) =>
+      Output.deserializeWire({ context, buffer }),
+  });
 
   return {
     header,
