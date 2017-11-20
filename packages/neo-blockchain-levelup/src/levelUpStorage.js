@@ -54,17 +54,18 @@ export default ({
     }
 
     return hash;
-  }
+  };
 
   const headerBase = read.createReadStorage({
     db,
     serializeKey: keys.typeKeyToSerializeKey.header,
     serializeKeyString: keys.typeKeyToSerializeKeyString.header,
-    deserializeValue: (buffer: Buffer) => Header.deserializeWire({
-      context,
-      buffer,
-    }),
-  })
+    deserializeValue: (buffer: Buffer) =>
+      Header.deserializeWire({
+        context,
+        buffer,
+      }),
+  });
 
   const getHeader = async ({ hashOrIndex }: HeaderKey): Promise<Header> => {
     const hash = await getHash({ hashOrIndex });
@@ -77,7 +78,7 @@ export default ({
     tryGetLatest: read.createTryGetLatest({
       db,
       latestKey: keys.maxHeaderHashKey,
-      deserializeResult: (result) => ({
+      deserializeResult: result => ({
         hash: common.deserializeHeaderHash(result),
       }),
       get: headerBase.get,
@@ -88,11 +89,12 @@ export default ({
     db,
     serializeKey: keys.typeKeyToSerializeKey.block,
     serializeKeyString: keys.typeKeyToSerializeKeyString.block,
-    deserializeValue: (buffer: Buffer) => Block.deserializeWire({
-      context,
-      buffer,
-    }),
-  })
+    deserializeValue: (buffer: Buffer) =>
+      Block.deserializeWire({
+        context,
+        buffer,
+      }),
+  });
 
   const getBlock = async ({ hashOrIndex }: BlockKey): Promise<Block> => {
     const hash = await getHash({ hashOrIndex });
@@ -105,7 +107,7 @@ export default ({
     tryGetLatest: read.createTryGetLatest({
       db,
       latestKey: keys.maxBlockHashKey,
-      deserializeResult: (result) => ({
+      deserializeResult: result => ({
         hash: common.deserializeBlockHash(result),
       }),
       get: blockBase.get,
@@ -116,10 +118,11 @@ export default ({
     db,
     serializeKey: keys.typeKeyToSerializeKey.transaction,
     serializeKeyString: keys.typeKeyToSerializeKeyString.transaction,
-    deserializeValue: (buffer: Buffer) => deserializeTransactionWire({
-      context,
-      buffer,
-    }),
+    deserializeValue: (buffer: Buffer) =>
+      deserializeTransactionWire({
+        context,
+        buffer,
+      }),
   });
 
   const getOutput = async ({ index, hash }: OutputKey): Promise<Output> => {
@@ -145,10 +148,11 @@ export default ({
       db,
       serializeKey: keys.typeKeyToSerializeKey.blockSystemFee,
       serializeKeyString: keys.typeKeyToSerializeKeyString.blockSystemFee,
-      deserializeValue: (buffer: Buffer) => BlockSystemFee.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        BlockSystemFee.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     account: read.createReadAllStorage({
       db,
@@ -156,10 +160,11 @@ export default ({
       serializeKeyString: keys.typeKeyToSerializeKeyString.account,
       minKey: keys.accountMinKey,
       maxKey: keys.accountMaxKey,
-      deserializeValue: (buffer: Buffer) => Account.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        Account.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     action: read.createReadGetAllStorage({
       db,
@@ -167,25 +172,28 @@ export default ({
       serializeKeyString: keys.typeKeyToSerializeKeyString.action,
       getMinKey: keys.getActionKeyMin,
       getMaxKey: keys.getActionKeyMax,
-      deserializeValue: (buffer: Buffer) => deserializeActionWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        deserializeActionWire({
+          context,
+          buffer,
+        }),
     }),
     asset: read.createReadStorage({
       db,
       serializeKey: keys.typeKeyToSerializeKey.asset,
       serializeKeyString: keys.typeKeyToSerializeKeyString.asset,
-      deserializeValue: (buffer: Buffer) => Asset.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        Asset.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     transaction,
     transactionSpentCoins: read.createReadStorage({
       db,
       serializeKey: keys.typeKeyToSerializeKey.transactionSpentCoins,
-      serializeKeyString: keys.typeKeyToSerializeKeyString.transactionSpentCoins,
+      serializeKeyString:
+        keys.typeKeyToSerializeKeyString.transactionSpentCoins,
       deserializeValue: (buffer: Buffer) =>
         TransactionSpentCoins.deserializeWire({ context, buffer }),
     }),
@@ -194,10 +202,11 @@ export default ({
       db,
       serializeKey: keys.typeKeyToSerializeKey.contract,
       serializeKeyString: keys.typeKeyToSerializeKeyString.contract,
-      deserializeValue: (buffer: Buffer) => Contract.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        Contract.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     storageItem: read.createReadGetAllStorage({
       db,
@@ -205,10 +214,11 @@ export default ({
       serializeKeyString: keys.typeKeyToSerializeKeyString.storageItem,
       getMinKey: keys.getStorageItemKeyMin,
       getMaxKey: keys.getStorageItemKeyMax,
-      deserializeValue: (buffer: Buffer) => StorageItem.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        StorageItem.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     validator: read.createReadAllStorage({
       db,
@@ -216,29 +226,32 @@ export default ({
       serializeKeyString: keys.typeKeyToSerializeKeyString.validator,
       minKey: keys.validatorMinKey,
       maxKey: keys.validatorMaxKey,
-      deserializeValue: (buffer: Buffer) => Validator.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        Validator.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     invocationData: read.createReadStorage({
       db,
       serializeKey: keys.typeKeyToSerializeKey.invocationData,
       serializeKeyString: keys.typeKeyToSerializeKeyString.invocationData,
-      deserializeValue: (buffer: Buffer) => InvocationData.deserializeWire({
-        context,
-        buffer,
-      }),
+      deserializeValue: (buffer: Buffer) =>
+        InvocationData.deserializeWire({
+          context,
+          buffer,
+        }),
     }),
     async close(): Promise<void> {
       await db.close();
     },
     async commit(changeSet: ChangeSet): Promise<void> {
-      const changes = changeSet.map(change => convertChange(change)).reduce(
-        (acc, converted) => acc.concat(converted),
-        [],
-      );
+      const changesList = changeSet.map(change => convertChange(change));
+      const changes = changesList.reduce((acc, converted) => {
+        acc.push(...converted);
+        return acc;
+      }, []);
       await db.batch(changes);
     },
-  }
+  };
 };

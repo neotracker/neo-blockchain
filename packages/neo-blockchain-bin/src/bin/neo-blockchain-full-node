@@ -40,7 +40,6 @@ const createFullNodeFromCLI = (
     chain: options.chain,
     dumpPath,
   });
-  console.log(node);
   return node;
 };
 

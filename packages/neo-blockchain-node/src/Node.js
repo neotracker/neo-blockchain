@@ -92,7 +92,7 @@ const GET_BLOCKS_COUNT = 500;
 const GET_BLOCKS_BUFFER = GET_BLOCKS_COUNT / 3;
 const GET_BLOCKS_TIME_MS = 10000;
 const GET_BLOCKS_THROTTLE_MS = 500;
-const GET_BLOCKS_CLOSE_COUNT = 3;
+const GET_BLOCKS_CLOSE_COUNT = 1;
 const LOCAL_HOST_ADDRESSES = new Set(['0.0.0.0', 'localhost', '127.0.0.1']);
 
 export default class Node implements INode {

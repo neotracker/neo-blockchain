@@ -12,18 +12,18 @@ import common, {
 import utils from './utils';
 
 export default class BinaryWriter {
-  buffer: Buffer;
+  buffer: Array<Buffer>;
 
   constructor() {
-    this.buffer = Buffer.from([]);
+    this.buffer = [];
   }
 
   toBuffer(): Buffer {
-    return this.buffer;
+    return Buffer.concat(this.buffer);
   }
 
   writeBytes(value: Buffer): this {
-    this.buffer = Buffer.concat([this.buffer, value]);
+    this.buffer.push(value);
     return this;
   }
 
@@ -58,9 +58,7 @@ export default class BinaryWriter {
   }
 
   writeInt64LE(value: BN): this {
-    return this.writeBytes(
-      value.toTwos(8 * 8).toArrayLike(Buffer, 'le', 8)
-    );
+    return this.writeBytes(value.toTwos(8 * 8).toArrayLike(Buffer, 'le', 8));
   }
 
   writeUInt64LE(value: BN): this {
@@ -135,13 +133,13 @@ export default class BinaryWriter {
     if (value.lt(utils.FD)) {
       this.writeUInt8(value.toNumber());
     } else if (value.lte(utils.FFFF)) {
-      this.writeUInt8(0xFD);
+      this.writeUInt8(0xfd);
       this.writeUInt16LE(value.toNumber());
     } else if (value.lte(utils.FFFFFFFF)) {
-      this.writeUInt8(0xFE);
+      this.writeUInt8(0xfe);
       this.writeUInt32LE(value.toNumber());
     } else {
-      this.writeUInt8(0xFF);
+      this.writeUInt8(0xff);
       this.writeUInt64LE(value);
     }
 
@@ -153,7 +151,7 @@ export default class BinaryWriter {
     if (max != null) {
       buffer = buffer.slice(0, max);
     }
-    return this.writeVarBytesLE(buffer)
+    return this.writeVarBytesLE(buffer);
   }
 
   writeECPoint(value: ECPoint): this {

@@ -11,32 +11,36 @@ import { UnknownTypeError } from './errors';
 import * as common from './common';
 import * as keys from './keys';
 
-const convertAddChange = (
-  change: AddChange,
-): LevelUpChange | Array<LevelUpChange> => {
+const convertAddChange = (change: AddChange): Array<LevelUpChange> => {
   switch (change.type) {
     case 'account':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.account(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.account(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'action':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.action({
-          blockIndex: change.value.blockIndex,
-          transactionIndex: change.value.transactionIndex,
-          index: change.value.index,
-        }),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.action({
+            blockIndex: change.value.blockIndex,
+            transactionIndex: change.value.transactionIndex,
+            index: change.value.index,
+          }),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'asset':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.asset(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.asset(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'block':
       return [
         {
@@ -51,11 +55,13 @@ const convertAddChange = (
         },
       ];
     case 'blockSystemFee':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.blockSystemFee(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.blockSystemFee(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'header':
       return [
         {
@@ -75,52 +81,64 @@ const convertAddChange = (
         },
       ];
     case 'transaction':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.transaction(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.transaction(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'transactionSpentCoins':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.transactionSpentCoins(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.transactionSpentCoins(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'contract':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.contract(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.contract(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'storageItem':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.storageItem({
-          hash: change.value.hash,
-          key: change.value.key,
-        }),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.storageItem({
+            hash: change.value.hash,
+            key: change.value.key,
+          }),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'validator':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.validator({
-          publicKey: change.value.publicKey,
-        }),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.validator({
+            publicKey: change.value.publicKey,
+          }),
+          value: change.value.serializeWire(),
+        },
+      ];
     case 'invocationData':
-      return {
-        type: 'put',
-        key: keys.typeKeyToSerializeKey.invocationData(change.value),
-        value: change.value.serializeWire(),
-      };
+      return [
+        {
+          type: 'put',
+          key: keys.typeKeyToSerializeKey.invocationData(change.value),
+          value: change.value.serializeWire(),
+        },
+      ];
     default:
       // eslint-disable-next-line
       (change.type: empty);
       throw new UnknownTypeError();
   }
-}
+};
 
 const convertDeleteChange = (change: DeleteChange): LevelUpChange => {
   switch (change.type) {
@@ -144,12 +162,11 @@ const convertDeleteChange = (change: DeleteChange): LevelUpChange => {
       (change.type: empty);
       throw new UnknownTypeError();
   }
-}
+};
 
 export default (change: Change): Array<LevelUpChange> => {
   if (change.type === 'add') {
-    const result = convertAddChange(change.change);;
-    return Array.isArray(result) ? result : [result];
+    return convertAddChange(change.change);
   } else if (change.type === 'delete') {
     return [convertDeleteChange(change.change)];
   }
