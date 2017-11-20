@@ -32,6 +32,17 @@ export type NodeOptions = {|
 export type Environment = {|
   dataPath: string,
   rpc: RPCServerEnvironment,
+  levelDownOptions?: {|
+    createIfMissing?: boolean,
+    errorIfExists?: boolean,
+    compression?: boolean,
+    cacheSize?: number,
+    writeBufferSize?: number,
+    blockSize?: number,
+    maxOpenFiles?: number,
+    blockRestartInterval?: number,
+    maxFileSize?: number,
+  |},
 |};
 
 export type Options = {|
@@ -58,7 +69,9 @@ export default ({
 |}) =>
   defer(async () => {
     const storage = levelUpStorage({
-      db: levelup(leveldown(environment.dataPath)),
+      db: levelup(
+        leveldown(environment.dataPath, environment.levelDownOptions),
+      ),
       context: { messageMagic: settings.messageMagic },
     });
     const blockchain = await Blockchain.create({
