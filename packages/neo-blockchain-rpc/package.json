@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-rpc",
-  "version": "0.0.57",
+  "version": "0.0.59",
   "keywords": [
     "neo",
     "blockchain"
@@ -22,9 +22,9 @@
     "koa-cors": "^0.0.16",
     "koa-mount": "^3.0.0",
     "lodash": "^4.17.4",
-    "neo-blockchain-client": "^0.0.48",
-    "neo-blockchain-core": "^0.0.43",
-    "neo-blockchain-node-core": "^0.0.56",
+    "neo-blockchain-client": "^0.0.59",
+    "neo-blockchain-core": "^0.0.59",
+    "neo-blockchain-node-core": "^0.0.59",
     "node-fetch": "^1.7.3",
     "rxjs": "^5.5.2",
     "ua-parser-js": "^0.7.17"

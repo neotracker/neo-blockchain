@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-neo-settings",
-  "version": "0.0.43",
+  "version": "0.0.59",
   "keywords": [
     "neo",
     "blockchain"
@@ -13,6 +13,6 @@
   "module": "./dist/es.js",
   "dependencies": {
     "bn.js": "^4.11.8",
-    "neo-blockchain-core": "^0.0.43"
+    "neo-blockchain-core": "^0.0.59"
   }
 }
