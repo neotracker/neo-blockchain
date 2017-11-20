@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-impl",
-  "version": "0.0.59",
+  "version": "0.0.60",
   "keywords": [
     "neo",
     "blockchain"
@@ -16,7 +16,7 @@
     "js-priority-queue": "^0.1.5",
     "lodash": "^4.17.4",
     "neo-blockchain-core": "^0.0.59",
-    "neo-blockchain-node-core": "^0.0.59",
+    "neo-blockchain-node-core": "^0.0.60",
     "rxjs": "^5.4.3"
   }
 }
