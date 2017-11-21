@@ -92,7 +92,7 @@ const GET_BLOCKS_COUNT = 500;
 const GET_BLOCKS_BUFFER = GET_BLOCKS_COUNT / 3;
 const GET_BLOCKS_TIME_MS = 10000;
 const GET_BLOCKS_THROTTLE_MS = 500;
-const GET_BLOCKS_CLOSE_COUNT = 1;
+const GET_BLOCKS_CLOSE_COUNT = 2;
 const LOCAL_HOST_ADDRESSES = new Set(['0.0.0.0', 'localhost', '127.0.0.1']);
 
 export default class Node implements INode {
@@ -347,6 +347,7 @@ export default class Node implements INode {
         this._bestPeer.data.startHeight < connectedPeer.data.startHeight
       ) {
         this._bestPeer = connectedPeer;
+        this._resetRequestBlocks();
         this._requestBlocks();
       }
     } else if (event.event === 'PEER_CLOSED') {
@@ -355,6 +356,7 @@ export default class Node implements INode {
         this._bestPeer.endpoint === event.extra.peer.endpoint
       ) {
         this._bestPeer = this._findBestPeer();
+        this._resetRequestBlocks();
         this._requestBlocks();
       }
     }
@@ -381,6 +383,8 @@ export default class Node implements INode {
         });
         peer.close();
         this._getBlocksRequestsCount = 0;
+        // TODO: Seems like this causes issues sometimes, try resetting here...
+        this._knownBlockHashes = createScalingBloomFilter();
       } else if (this._shouldRequestBlocks()) {
         if (this._getBlocksRequestsIndex === block.index) {
           this._blockchain.log({
@@ -422,6 +426,11 @@ export default class Node implements INode {
       this._requestBlocks();
     }
   }, GET_BLOCKS_THROTTLE_MS);
+
+  _resetRequestBlocks(): void {
+    this._getBlocksRequestsIndex = null;
+    this._getBlocksRequestsCount = 0;
+  }
 
   _shouldRequestBlocks(): boolean {
     const block = this._blockchain.currentBlock;
