@@ -1,6 +1,6 @@
 {
   "name": "neo-blockchain-bin",
-  "version": "0.0.61",
+  "version": "0.0.62",
   "keywords": [
     "neo",
     "blockchain"
@@ -20,10 +20,10 @@
     "lodash": "^4.17.4",
     "neo-blockchain-client": "^0.0.59",
     "neo-blockchain-core": "^0.0.59",
-    "neo-blockchain-full-node": "^0.0.61",
+    "neo-blockchain-full-node": "^0.0.62",
     "neo-blockchain-neo-settings": "^0.0.59",
-    "neo-blockchain-node-core": "^0.0.60",
-    "neo-blockchain-offline": "^0.0.60",
+    "neo-blockchain-node-core": "^0.0.62",
+    "neo-blockchain-offline": "^0.0.62",
     "rxjs": "^5.5.2",
     "winston": "^3.0.0-rc1"
   }
