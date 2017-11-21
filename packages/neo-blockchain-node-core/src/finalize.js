@@ -22,9 +22,16 @@ function finalize<T>(
         const result = func(lastValue);
         if (result != null && result.then != null) {
           const id = uuidV4();
-          finalize._shutdownPromises[id] = result.then(() => {
-            delete finalize._shutdownPromises[id];
+          let deleted = false;
+          const promise = result.then(() => {
+            deleted = true;
+            if (finalize._shutdownPromises[id] != null) {
+              delete finalize._shutdownPromises[id];
+            }
           });
+          if (!deleted) {
+            finalize._shutdownPromises[id] = promise;
+          }
         }
       });
       return subscription;
